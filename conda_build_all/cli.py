@@ -1,5 +1,6 @@
 import argparse
 import conda_build_all
+#import conda_build_all.builder
 
 
 def main():
@@ -21,8 +22,7 @@ def main():
                               'If a url:// channel, the build will be uploaded with the anaconda '
                               'client functionality.'))
 
-    parser.add_argument("--matrix-conditions", nargs='*',
-                        dest='extra_build_conditions',
+    parser.add_argument("--matrix-conditions", nargs='*', default=[],
                         help="Extra conditions for computing the build matrix.")
     parser.add_argument("--matrix-max-n-major-versions", default=2,
                         help=("When computing the build matrix, limit to the latest n major versions "
@@ -39,4 +39,9 @@ def main():
 
 
     args = parser.parse_args()
+
+    print(args)
+    b = conda_build_all.builder.Builder(args.recipes, 'pelson', 'main')
+    b.extra_build_conditions = args.matrix_conditions
+    b.main()
     raise NotImplementedError("The functionality doesn't exist yet.")

@@ -51,7 +51,7 @@ class Test_BakedDistribution_resolve_all(RecipeCreatingUnit):
             requirements:
                 build:
                  - python >=2.7
-                 - numpy
+                 - numpy x.x
                 run:
                  - python x.x
                  - numpy x.x

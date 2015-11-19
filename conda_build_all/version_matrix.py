@@ -138,11 +138,16 @@ def special_case_version_matrix(meta, index):
         if case in cases | unsolvable_cases:
             return
 
-        specs = requirements + ['{} {}.*'.format(pkg, version)
-                                for pkg, version in case]
+        specs = ([ms.spec for ms in requirement_specs.values()] +
+                 ['{} {}.*'.format(pkg, version) for pkg, version in case])
+        cases.add(case)
+        return
+        # This code path is disabled for now as it takes a prohibitive amount of time to compute.
         try:
-            r.solve(specs, max_only=True)
-        except SystemExit as err:
+            # Figure out if this case is actually resolvable. We don't care how,
+            # just that it could be.
+            r.solve2(specs, features=set(), guess=False, unsat_only=True)
+        except RuntimeError:
             unsolvable_cases.add(case)
         else:
             cases.add(case)
@@ -209,5 +214,65 @@ def filter_cases(cases, extra_specs):
             if spec.name in cases_by_pkg_name:
                 match.append(bool(spec.match(cases_by_pkg_name[spec.name])))
         if all(match):
+            yield case
+
+
+def keep_top_n_major_versions(cases, n=2):
+    """
+    Remove all but the top n major version cases for each package in cases.
+
+    Parameters
+    ----------
+    cases
+        The cases to filter. See filter_cases for a definition of cases.
+    n : integer >= 0
+        The number of major versions to keep. Default is ``2``. 0 results in all
+        major versions being kept.
+
+    """
+    name_to_major_versions = {}
+    for case in cases:
+        for name, version in case:
+            name_to_major_versions.setdefault(name, set()).add(int(version.split('.')[0]))
+    cutoff = {name: sorted(majors)[-n:] for name, majors in name_to_major_versions.items()}
+    for case in cases:
+        keeper = True
+        for name, version in case:
+            if int(version.split('.')[0]) not in cutoff[name]:
+                keeper = False
+        if keeper:
+            yield case
+
+
+def keep_top_n_minor_versions(cases, n=2):
+    """
+    Remove all but the top n minor version cases for each package in cases.
+    This will not do any major version filtering, so two major versions with
+    many minor versions will result in n x 2 cases returned.
+
+    Parameters
+    ----------
+    cases
+        The cases to filter. See filter_cases for a definition of cases.
+    n : integer >= 0
+        The number of minor versions to keep. Default is ``2``. 0 results in all
+        minor versions being kept.
+
+    """
+    mapping = {}
+    for case in cases:
+        for name, version in case:
+            major = int(version.split('.')[0])
+            minor = int(version.split('.')[1])
+            mapping.setdefault((name, major), set()).add(minor)
+    cutoff = {key: sorted(minors)[-n:] for key, minors in mapping.items()}
+    for case in cases:
+        keeper = True
+        for name, version in case:
+            major = int(version.split('.')[0])
+            minor = int(version.split('.')[1])
+            if minor not in cutoff[(name, major)]:
+                keeper = False
+        if keeper:
             yield case
 
