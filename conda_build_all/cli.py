@@ -1,8 +1,11 @@
 import argparse
+import conda_build_all
 
 
 def main():
     parser = argparse.ArgumentParser(description='Build many conda distributions.')
+
+    parser.add_argument('--version', action='version', version=conda_build_all.__version__)
 
     parser.add_argument('recipes',
                         help='The folder containing conda recipes to build.')

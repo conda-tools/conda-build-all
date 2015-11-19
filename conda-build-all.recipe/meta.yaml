@@ -1,0 +1,35 @@
+{% set data = load_setuptools() %}
+
+package:
+    name: conda-build-all
+    version: {{data.get('version')}}
+
+source:
+    path: ../
+
+build:
+    script: python setup.py install --single-version-externally-managed --record=record.txt
+
+requirements:
+    build:
+        - python
+        - setuptools
+
+    run:
+        - python
+        - setuptools
+        - conda
+        - conda-build
+
+test:
+  imports:
+    - conda_build_all
+  commands:
+    - conda buildall --help
+    - conda-buildall --version
+# Note, when https://github.com/conda/conda/pull/1840 is merged, this is the prefered option.
+#    - conda build-all --help
+
+about:
+  license: BSD-3
+  home: https://github.com/pelson/conda-build-all
