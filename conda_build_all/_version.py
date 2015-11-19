@@ -232,9 +232,14 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
     branch_name = run_command(GITS, ["rev-parse", "--abbrev-ref", "HEAD"],
                               cwd=root).strip()
     if branch_name == 'HEAD':
+        # If we aren't exactly on a branch, pick a branch which represents
+        # the current commit. If all else fails, we are on a branchless
+        # commit.
         branches = run_command(GITS, ["branch", "--contains"],
                                cwd=root).split('\n')
-        branches = [branch[2:] for branch in branches if branch[4:5] != '(']
+        # Strip off the leading "* " from the list of branches.
+        branches = [branch[2:] for branch in branches
+                    if branch and branch[4:5] != '(']
         if 'master' in branches:
             branch_name = 'master'
         elif not branches:
@@ -242,8 +247,6 @@ def git_pieces_from_vcs(tag_prefix, root, verbose, run_command=run_command):
         else:
             # Pick the first branch that is returned. Good or bad.
             branch_name = branches[0]
-
-    branch_name = branch_name.replace(' ', '.').replace('(', '').replace(')', '')
 
     pieces['branch'] = branch_name
 
@@ -469,9 +472,12 @@ def render_pep440_branch_based(pieces):
     # exceptions:
     # 1: no tags. 0.0.0.devDISTANCE[+gHEX]
 
-    master = pieces.get('branch') == 'master'
-    maint = re.match(default_maint_branch_regexp,
-                     pieces.get('branch') or '')
+    replacements = ([' ', '.'], ['(', ''], [')', ''])
+    branch_name = pieces.get('branch') or ''
+    for old, new in replacements:
+        branch_name = branch_name.replace(old, new)
+    master = branch_name == 'master'
+    maint = re.match(default_maint_branch_regexp, branch_name)
 
     # If we are on a tag, just pep440-pre it.
     if pieces["closest-tag"] and not (pieces["distance"] or
@@ -491,18 +497,17 @@ def render_pep440_branch_based(pieces):
                 rendered = add_one_to_version(pieces["closest-tag"])
                 if pieces["distance"]:
                     rendered += ".dev%d" % pieces["distance"]
-                # Put the branch name in if it isn't master nor a
-                # maintenance branch.
 
-            plus = '+'
+            suffix = []
+            # Put the branch name in if it isn't master nor a
+            # maintenance branch.
             if not (master or maint):
-                rendered += "%s%s" % (plus,
-                                      pieces.get('branch') or
-                                      'unknown_branch')
-                plus = '_'
+                suffix.append('%s' % (branch_name or 'unknown_branch'))
 
             if pieces["dirty"]:
-                rendered += "%sg%s" % (plus, pieces["short"])
+                suffix.append('g%s' % pieces["short"])
+            if suffix:
+                rendered += '+%s' % '_'.join(suffix)
         else:
             rendered = pieces["closest-tag"]
     return rendered
