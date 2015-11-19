@@ -96,8 +96,6 @@ class Test_special_case_version_matrix(unittest.TestCase):
         self.index.add_pkg('python', '3.5.0')
         r = special_case_version_matrix(a, self.index)
         # No python 3 should be here.
-        return
-        # TODO: FIX THIS!!!!
         self.assertEqual(r, set([(('python', '2.7'),
                                   ),
                                 ])

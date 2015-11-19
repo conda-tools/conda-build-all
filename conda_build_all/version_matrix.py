@@ -126,7 +126,6 @@ def special_case_version_matrix(meta, index):
     run_requirement_specs = {MatchSpec(spec).name: MatchSpec(spec)
                              for spec in run_requirements}
 
-
     # Thanks to https://github.com/conda/conda-build/pull/493 we no longer need to
     # compute the complex matrix for numpy versions unless a specific version has
     # been defined.
@@ -149,7 +148,23 @@ def special_case_version_matrix(meta, index):
         """
         return '.'.join(version_str.split('.')[:2])
 
-    cases = []
+    cases = set()
+    unsolvable_cases = set()
+
+    def add_case_if_soluble(case):
+        # Whilst we strictly don't need to, shortcutting cases we've already seen makes a 
+        # *huge* performance difference.
+        if case in cases | unsolvable_cases:
+            return
+
+        specs = requirements + ['{} {}.*'.format(pkg, version)
+                                for pkg, version in case]
+        try:
+            r.solve(specs, max_only=True)
+        except SystemExit as err:
+            unsolvable_cases.add(case)
+        else:
+            cases.add(case)
 
     with override_conda_logging(logging.WARN):
         if 'numpy' in requirement_specs:
@@ -168,15 +183,13 @@ def special_case_version_matrix(meta, index):
                     case = (('python', py_vn),
                             ('numpy', np_vn),
                             )
-                    if case not in cases:
-                        cases.append(case)
+                    add_case_if_soluble(case)
         elif 'python' in requirement_specs:
             py_spec = requirement_specs.pop('python')
             for python_pkg in r.get_pkgs(py_spec):
                 py_vn = minor_vn(index[python_pkg.fn]['version'])
                 case = (('python', py_vn), )
-                if case not in cases:
-                    cases.append(case)
+                add_case_if_soluble(case)
 
         if 'perl' in requirement_specs:
             raise NotImplementedError('PERL version matrix not yet implemented.')
@@ -188,7 +201,7 @@ def special_case_version_matrix(meta, index):
 
     # Put an empty case in to allow simple iteration of the results.
     if not cases:
-        cases.append(())
+        cases.add(())
 
     return set(cases)
 
