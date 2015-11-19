@@ -84,7 +84,12 @@ class ResolvedDistribution(object):
         return result
 
     @classmethod
-    def compute_matrix(cls, meta, index=None, extra_conditions=None):
+    def resolve_all(cls, meta, index=None, extra_conditions=None):
+        """
+        Given a package, return a list of ResolvedDistributions, one for each
+        possible (necessary) version permutation.
+
+        """
         if index is None:
             with vn_matrix.override_conda_logging('WARN'):
                 index = get_index()
@@ -92,8 +97,7 @@ class ResolvedDistribution(object):
         cases = vn_matrix.special_case_version_matrix(meta, index)
 
         if extra_conditions:
-            cases = list(vn_matrix.filter_cases(cases, index,
-                                                extra_conditions))
+            cases = list(vn_matrix.filter_cases(cases, extra_conditions))
         result = []
         for case in cases:
             dist = cls(meta, case)

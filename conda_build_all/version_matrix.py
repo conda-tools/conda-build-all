@@ -57,25 +57,6 @@ def override_conda_logging(level):
         logger.handlers = handlers[logger_name]
 
 
-@contextmanager
-def setup_vn_mtx_case(case):
-    orig_npy = conda_build.config.config.CONDA_NPY
-    orig_py = conda_build.config.config.CONDA_PY
-
-    for pkg, version in case:
-        version = int(version.replace('.', ''))
-        if pkg == 'python':
-            conda_build.config.config.CONDA_PY = version
-        elif pkg == 'numpy':
-            conda_build.config.config.CONDA_NPY = version
-        else:
-            raise NotImplementedError('Package {} not yet implemented.'
-                                      ''.format(pkg))
-    yield
-    conda_build.config.config.CONDA_NPY = orig_npy
-    conda_build.config.config.CONDA_PY = orig_py
-
-
 def conda_special_versions(meta, index, version_matrix=None):
     """
     Returns a generator which configures conda build's PY and NPY versions
@@ -96,26 +77,26 @@ def special_case_version_matrix(meta, index):
     Return the non-orthogonal version matrix for special software within conda
     (numpy, python).
 
-    For example, supposing there was a numpy 1.8 & 1.9 for python 2.7,
-    but only a numpy 1.9 for python 3.5, the matrix should be:
+    For example, supposing a meta depended on numpy and python, and that there
+    was a numpy 1.8 & 1.9 for python 2.7 but only a numpy 1.9 for python 3.5,
+    the matrix should be:
 
-        ([('python', '2.7.0'), ('numpy', '1.8.0')],
-         [('python', '2.7.0'), ('numpy', '1.9.0')],
-         [('python', '3.5.0'), ('numpy', '1.9.0')])
+        ([('python', '2.7'), ('numpy', '1.8')],
+         [('python', '2.7'), ('numpy', '1.9')],
+         [('python', '3.5'), ('numpy', '1.9')])
 
     Packages which don't depend on any of the special cases will return an
-    iterable with an empty list, so that code such as:
+    iterable with an empty tuple. This is analogous to saying "a build is needed,
+    but there are no special cases". Thus, code may reliably implement a loop such as:
 
     for case in special_case_version_matrix(...):
         ... setup the case ...
         ... build ...
 
-    can be written provided that the process which handles the cases can handle
-    an empty list.
-
     .. note::
 
-        This algorithm does not deal with PERL and R versions at this time.
+        This algorithm does not deal with PERL and R versions at this time, and may be
+        extended in the future to compute other special case dimensions (e.g. features).
 
     """
     r = conda.resolve.Resolve(index)
@@ -196,9 +177,6 @@ def special_case_version_matrix(meta, index):
         if 'r' in requirement_specs:
             raise NotImplementedError('R version matrix not yet implemented.')
 
-    # We only want the special cases.
-#     cases = list(filter_cases(cases, index, requirement_specs.keys()))
-
     # Put an empty case in to allow simple iteration of the results.
     if not cases:
         cases.add(())
@@ -206,7 +184,7 @@ def special_case_version_matrix(meta, index):
     return set(cases)
 
 
-def filter_cases(cases, index, extra_specs):
+def filter_cases(cases, extra_specs):
     """
     cases might look like:
 
@@ -221,10 +199,13 @@ def filter_cases(cases, index, extra_specs):
     specs = [MatchSpec(spec) for spec in extra_specs]
 
     for case in cases:
+        # Invent a sensible "tar.bz2" name which we can use to invoke conda's
+        # MatchSpec matching.
         cases_by_pkg_name = {name: '{}-{}.0-0.tar.bz2'.format(name, version)
-                  for name, version in case}
+                             for name, version in case}
         match = []
         for spec in specs:
+            # Only run the filter on the packages in cases.
             if spec.name in cases_by_pkg_name:
                 match.append(bool(spec.match(cases_by_pkg_name[spec.name])))
         if all(match):

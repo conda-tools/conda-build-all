@@ -1,7 +1,8 @@
 import unittest
 
 import conda.config
-from conda_build_all.version_matrix import special_case_version_matrix
+from conda_build_all.version_matrix import (special_case_version_matrix,
+                                            filter_cases)
 from conda_build_all.tests.unit.dummy_index import DummyPackage, DummyIndex
 
 
@@ -100,6 +101,50 @@ class Test_special_case_version_matrix(unittest.TestCase):
                                   ),
                                 ])
                          )
+
+
+class Test_filter_cases(unittest.TestCase):
+    # n.b. We should be careful not to test MatchSpec functionality here.
+    def setUp(self):
+        self.item = {
+                     'py26': ('python', '2.6'),
+                     'py34': ('python', '3.4'),
+                     'py35': ('python', '3.5'),
+                     'o12': ('other', '1.2'),
+                     'o13': ('other', '1.3'),
+                     'np19': ('numpy', '1.9'),
+                     'np110': ('numpy', '1.10'),
+                     }
+    def test_nothing(self):
+        self.assertEqual(list(filter_cases([], [])), [])
+
+    def test_no_filter(self):
+        cases = ([self.item['py26']],
+                 [self.item['py35']])
+        self.assertEqual(tuple(filter_cases(cases, [])), cases)
+
+    def test_single_filter(self):
+        cases = ([self.item['py26']],
+                 [self.item['py35']])
+        self.assertEqual(tuple(filter_cases(cases, ['python >=3'])), cases[1:])
+
+    def test_multiple_filter(self):
+        cases = ([self.item['py26']],
+                 [self.item['py34']],
+                 [self.item['py35']])
+        self.assertEqual(tuple(filter_cases(cases, ['python >=3', 'python <=3.4'])), cases[1:2])
+
+    def test_multiple_filter(self):
+        cases = ([self.item['py26'], self.item['np110']],
+                 [self.item['py34'], self.item['np19']],
+                 [self.item['py35'], self.item['np110']])
+        self.assertEqual(tuple(filter_cases(cases, ['python >=3', 'numpy 1.10.*'])), cases[2:])
+
+    def test_other_cases(self):
+        cases = ([self.item['py26'], self.item['o12']],
+                 [self.item['py34'], self.item['o12']],
+                 [self.item['py35'], self.item['o13']])
+        self.assertEqual(tuple(filter_cases(cases, ['other 1.2.*'])), cases[:2])
 
 
 if __name__ == '__main__':
