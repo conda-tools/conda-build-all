@@ -1,6 +1,6 @@
 import argparse
 import conda_build_all
-#import conda_build_all.builder
+import conda_build_all.builder
 
 
 def main():
@@ -15,7 +15,7 @@ def main():
                               'available in the specified channel.'))
     parser.add_argument('--inspect-directory', nargs='*',
                         help='Skip a build if the equivalent disribution is already available in the specified directory.')
-    parser.add_argument('--upload-channel', nargs='*',
+    parser.add_argument('--build-artefact-destination', nargs='*',
                         help=('The channel(s) to upload built distributions to. It is '
                               'rare to specify this without the --inspect-channel argument. '
                               'If a file:// channel, the build will be copied to the directory. '
@@ -24,12 +24,12 @@ def main():
 
     parser.add_argument("--matrix-conditions", nargs='*', default=[],
                         help="Extra conditions for computing the build matrix.")
-    parser.add_argument("--matrix-max-n-major-versions", default=2,
+    parser.add_argument("--matrix-max-n-major-versions", default=2, type=int,
                         help=("When computing the build matrix, limit to the latest n major versions "
                               "(0 makes this unlimited). For example, if Python 1, 2 and Python 3 are "
                               "resolved by the recipe and associated matrix conditions, only the latest N major "
                               "version will be used for the build matrix. (default: 2)"))
-    parser.add_argument("--matrix-max-n-minor-versions", default=2,
+    parser.add_argument("--matrix-max-n-minor-versions", default=2, type=int,
                         help=("When computing the build matrix, limit to the latest n minor versions "
                               "(0 makes this unlimited). Note that this does not limit the number of major "
                               "versions (see also matrix-max-n-major-version). For example, if Python 2 and "
@@ -37,11 +37,13 @@ def main():
                               "of Nx2 builds will be identified. "
                               "(default: 2)"))
 
-
     args = parser.parse_args()
 
-    print(args)
-    b = conda_build_all.builder.Builder(args.recipes, 'pelson', 'main')
-    b.extra_build_conditions = args.matrix_conditions
+    max_n_versions = (args.matrix_max_n_major_versions,
+                      args.matrix_max_n_minor_versions)
+    b = conda_build_all.builder.Builder(args.recipes, args.inspect_channel,
+                                        args.inspect_directory,
+                                        args.build_artefact_destination,
+                                        args.matrix_conditions,
+                                        max_n_versions)
     b.main()
-    raise NotImplementedError("The functionality doesn't exist yet.")
