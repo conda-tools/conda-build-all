@@ -23,7 +23,7 @@ class StdoutNewline(SysStdoutWriteHandler):
         SysStdoutWriteHandler.emit(self, record)
 
 
-stdout = logging.getLogger('obvci.stdoutlog')
+stdout = logging.getLogger('conda_build_all.version_matrix.stdoutlog')
 stdout.addHandler(StdoutNewline())
 stdout.setLevel(logging.WARNING)
 
