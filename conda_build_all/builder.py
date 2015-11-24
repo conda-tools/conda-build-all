@@ -17,6 +17,7 @@ from argparse import Namespace
 from binstar_client.utils import get_binstar
 import binstar_client
 from conda.api import get_index
+import conda.config
 from conda_build.metadata import MetaData
 from conda_build.build import bldpkg_path
 import conda.config
@@ -104,7 +105,7 @@ class Builder(object):
 
         """
         self.conda_recipes_directory = conda_recipes_directory
-        self.inspection_channels = inspection_channels
+        self.inspection_channels = inspection_channels or []
         self.inspection_directories = inspection_directories
         self.artefact_destinations = artefact_destinations
         self.matrix_conditions = matrix_conditions

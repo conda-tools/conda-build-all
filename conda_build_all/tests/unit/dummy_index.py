@@ -60,5 +60,6 @@ class DummyIndex(dict):
         if not os.path.exists(channel_subdir):
             os.mkdir(channel_subdir)
         write_repodata({'packages': self, 'info': {}}, channel_subdir)
+
         return channel_subdir
 

@@ -66,3 +66,7 @@ def main():
                                         args.matrix_conditions,
                                         max_n_versions)
     b.main()
+
+
+if __name__ == '__main__':
+    main()

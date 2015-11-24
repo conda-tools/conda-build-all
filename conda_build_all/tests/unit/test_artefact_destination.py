@@ -102,7 +102,7 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
         self.assertEqual(dest.channel, 'main')
 
     def test_from_spec_owner_and_channel(self):
-        spec = 'testing_owner/my_channel'
+        spec = 'testing_owner/channels/my_channel'
         os.environ['BINSTAR_TOKEN'] = 'a test token'
         dest = AnacondaClientChannelDest.from_spec(spec)
         self.assertEqual(dest.token, 'a test token')

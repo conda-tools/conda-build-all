@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 import os
 import shutil
 import tempfile
@@ -82,7 +83,6 @@ class Test__find_existing_built_dists(RecipeCreatingUnit):
     def test_full_version_exists_on_channel(self):
         # Only a vn2.0 build 1 is available, we want to assert that nothing is found for a1 and a2 build 0.
         channel = self.make_channel([self.metas['a2_1']])
-        print(channel)
         builder = Builder('.', ['file://' + channel], [], [], [])
         existing = builder.find_existing_built_dists([self.metas['a1'], self.metas['a2']])
         self.assertEqual([(meta.dist(), locn) for meta, locn in existing],

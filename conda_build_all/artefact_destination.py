@@ -66,7 +66,7 @@ class AnacondaClientChannelDest(ArtefactDestination):
         """
         token = os.environ.get("BINSTAR_TOKEN", None)
         if '/' in spec:
-            owner, channel = spec.split('/')
+            owner, _, channel = spec.split('/')
         else:
             owner, channel = spec, 'main'
         return cls(token, owner, channel)
