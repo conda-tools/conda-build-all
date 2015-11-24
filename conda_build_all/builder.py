@@ -8,6 +8,7 @@ defined), and the next package will be processed.
 """
 from __future__ import print_function
 
+import glob
 import logging
 import os
 import subprocess
@@ -42,12 +43,6 @@ def distribution_exists(binstar_cli, owner, metadata):
     except binstar_client.errors.NotFound:
         exists = False
     return exists
-
-
-def recipes_to_build(binstar_cli, owner, channel, recipe_metas):
-    for meta in recipe_metas:
-        if not inspect_binstar.distribution_exists(binstar_cli, owner, meta):
-            yield meta
 
 
 def fetch_metas(directory):
@@ -97,22 +92,15 @@ class Builder(object):
         self.conda_recipes_directory = conda_recipes_directory
         self.inspection_channels = inspection_channels
         self.inspection_directories = inspection_directories
-        self.artefact_destinations = artefact_destinations
+        self.artefact_destinations = artefact_destinations or []
         self.matrix_conditions = matrix_conditions
         self.matrix_max_n_major_minor_versions = matrix_max_n_major_minor_versions
 
         self.upload_owner = 'pelson'
         self.upload_channel = 'dev'
 
-        self.binstar_token = os.environ.get('BINSTAR_TOKEN', None) or None
-        self.can_upload = self.binstar_token is not None
-
-        if not self.can_upload:
-            print('**Build will continue, but no uploads will take place.**')
-            print('To automatically upload from this script, define the BINSTAR_TOKEN env variable.')
-            print('This is done automatically on the travis-ci system once the PR has been merged.')
-
-        self.binstar_cli = get_binstar(Namespace(token=self.binstar_token, site=None))
+        self.anaconda_cli = None
+        # get_binstar(Namespace(token=self.binstar_token, site=None))
 
     def fetch_all_metas(self):
         """
@@ -124,21 +112,30 @@ class Builder(object):
         recipe_metas = sort_dependency_order(recipe_metas)
         return recipe_metas
 
-    def calculate_existing_distributions(self, recipe_metas):
-        # Figure out which distributions binstar.org already has.
-        existing_distributions = [meta for meta in recipe_metas
-                                  if inspect_binstar.distribution_exists(self.binstar_cli, self.upload_owner, meta)]
+    def find_existing_built_dists(self, recipe_metas):
+        recipes = tuple([meta, None] for meta in recipe_metas)
+        if self.inspection_channels:
+            # For an unknown reason we are unable to cache the get_index call. There is a
+            # test which fails against v3.18.6 if use_cache is True.
+            index = get_index(self.inspection_channels, prepend=False, use_cache=False)
+            # We look to see if a distribution exists in the channel. Note: This is not checking
+            # there is a distribution for this platform. This isn't a big deal, as channels are
+            # typically split by platform. If this changes, we would need to re-consider how this
+            # is implemented.
 
-        print('Resolved dependencies, will be built in the following order: \n\t{}'.format(
-                   '\n\t'.join(['{} (will be built: {})'.format(meta.dist(), meta not in existing_distributions)
-                                for meta in recipe_metas])))
-        return existing_distributions
-
-    def recipes_to_build(self, recipes):
-        print('IDENTIFICATION OF RECIPES TO BUILD would happen')
+            for recipe_pair in recipes:
+                meta, dist_location = recipe_pair
+                if meta.pkg_fn() in index:
+                    recipe_pair[1] = index[meta.pkg_fn()]['channel']
+        if self.inspection_directories:
+            for directory in self.inspection_directories:
+                files = glob.glob(os.path.join(directory, '*.tar.bz2'))
+                fnames = [os.path.basename(fpath) for fpath in files]
+                for recipe_pair in recipes:
+                    meta, dist_location = recipe_pair
+                    if dist_location is None and meta.pkg_fn() in fnames:
+                        recipe_pair[1] = directory
         return recipes
-        existing_distributions = self.calculate_existing_distributions(recipes)
-        return [recipe not in existing_distributions for recipe in recipes]
 
     def build(self, meta):
         print('Building ', meta.dist())
@@ -147,7 +144,7 @@ class Builder(object):
 
     def main(self):
         recipe_metas = self.fetch_all_metas()
-        index = get_index()
+        index = get_index(use_cache=True)
 
         print('Resolving distributions from {} recipes... '.format(len(recipe_metas)))
 
@@ -155,7 +152,7 @@ class Builder(object):
         for meta in recipe_metas:
             distros = resolved_distribution.ResolvedDistribution.resolve_all(meta, index,
                                                        getattr(self, 'extra_build_conditions', []))
-            # TODO: Update the index with the new distros
+            # TODO: Update the index with the new distros (see https://github.com/pelson/Obvious-CI/issues/25)
             distro_cases = {distro.special_versions: distro for distro in distros}
             cases = list(vn_matrix.keep_top_n_major_versions(distro_cases.keys(), n=self.matrix_max_n_major_minor_versions[0]))
             cases = list(vn_matrix.keep_top_n_minor_versions(cases, n=self.matrix_max_n_major_minor_versions[1]))
@@ -165,30 +162,32 @@ class Builder(object):
 
         print('Computed that there are {} distributions from the {} '
               'recipes:'.format(len(all_distros), len(recipe_metas)))
-        recipes_to_build = self.recipes_to_build(all_distros)
+        recipes_and_dist_locn = self.find_existing_built_dists(all_distros)
 
-        for meta, build_dist in zip(all_distros, recipes_to_build):
-            if build_dist:
-                print('BUILDING would happen')
-#                self.build(meta)
-            self.post_build(meta, build_occured=build_dist)
+        print('Resolved dependencies, will be built in the following order: \n\t{}'.format(
+              '\n\t'.join(['{} (will be built: {})'.format(meta.dist(), dist_locn is None)
+                           for meta, dist_locn in recipes_and_dist_locn])))
+ 
+        for meta, built_dist_location in recipes_and_dist_locn:
+            if built_dist_location is None:
+                built_dist_location = self.build(meta)
+            self.post_build(meta, built_dist_location)
 
-    def post_build(self, meta, build_occured=True):
-        print('POST BUILD would happen')
-        return
-        if self.can_upload:
-            already_on_channel = inspect_binstar.distribution_exists_on_channel(self.binstar_cli,
-                                                                                self.upload_owner,
-                                                                                meta,
-                                                                                channel=self.upload_channel)
-            if not build_occured and not already_on_channel:
-                # Link a distribution.
-                print('Adding existing {} to the {} channel.'.format(meta.name(), self.upload_channel))
-                inspect_binstar.add_distribution_to_channel(self.binstar_cli, self.upload_owner, meta, channel=self.upload_channel)
-            elif already_on_channel:
-                print('Nothing to be done for {} - it is already on {}.'.format(meta.name(), self.upload_channel))
-            else:
-                # Upload the distribution
-                print('Uploading {} to the {} channel.'.format(meta.name(), self.upload_channel))
-                build.upload(self.binstar_cli, meta, self.upload_owner, channels=[self.upload_channel])
+    def post_build(self, meta, built_dist_location):
+        """
+        The post build phase occurs whether or not a build has actually taken place.
+        It is the point at which a distribution is transfered to the desired artefact
+        location.
+
+        Parameters
+        ----------
+        meta : MetaData
+            The distribution for which we are running the post-build phase
+        build_dist_location : str
+            The location of the built .tar.bz2 file for the given meta.
+
+        """
+        for artefact_destination in self.artefact_destinations:
+            print('arti:', artefact_destination)
+            #            artefact_destination.make_available(meta, built_dist_location)
 

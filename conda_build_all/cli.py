@@ -15,6 +15,8 @@ def main():
                               'available in the specified channel.'))
     parser.add_argument('--inspect-directory', nargs='*',
                         help='Skip a build if the equivalent disribution is already available in the specified directory.')
+    parser.add_argument('--no-inspect-conda-bld-directory', default=True, action='store_false',
+                        help='Skip a build if the equivalent disribution is already in the conda-bld directory.')
     parser.add_argument('--build-artefact-destination', nargs='*',
                         help=('The channel(s) to upload built distributions to. It is '
                               'rare to specify this without the --inspect-channel argument. '
@@ -41,8 +43,11 @@ def main():
 
     max_n_versions = (args.matrix_max_n_major_versions,
                       args.matrix_max_n_minor_versions)
+    inspection_directories = args.inspect_directory or []
+    if not args.no_inspect_conda_bld_directory and os.path.isdir(conda_build.config.bldpkgs_dir):
+        inspection_directories.append(conda_build.config.bldpkgs_dir)
     b = conda_build_all.builder.Builder(args.recipes, args.inspect_channel,
-                                        args.inspect_directory,
+                                        inspection_directories,
                                         args.build_artefact_destination,
                                         args.matrix_conditions,
                                         max_n_versions)

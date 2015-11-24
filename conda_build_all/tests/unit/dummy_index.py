@@ -1,4 +1,7 @@
 import collections
+import os
+
+from conda_build.index import write_repodata
 import conda.config
 
 
@@ -42,3 +45,20 @@ class DummyIndex(dict):
                         build=build_string, subdir=conda.config.subdir,
                         depends=tuple(depends), **extra_items)
         self['{}-{}-{}.tar.bz2'.format(name, version, build_string)] = pkg_info
+
+    def add_pkg_meta(self, meta):
+        # Add a package given its MetaData instance. This may include a DummyPackage
+        # instance in the future.
+        if isinstance(meta, DummyPackage):
+            raise NotImplementedError('')
+        self['{}.tar.bz2'.format(meta.dist())] = meta.info_index()
+
+    def write_to_channel(self, dest):
+        # Write the index to a channel. Useful to get conda to read it back in again
+        # using conda.api.get_index().
+        channel_subdir = os.path.join(dest, conda.config.subdir)
+        if not os.path.exists(channel_subdir):
+            os.mkdir(channel_subdir)
+        write_repodata({'packages': self, 'info': {}}, channel_subdir)
+        return channel_subdir
+
