@@ -94,7 +94,7 @@ class ResolvedDistribution(object):
             with vn_matrix.override_conda_logging('WARN'):
                 index = get_index()
 
-        cases = vn_matrix.special_case_version_matrix(meta, index)
+        cases = sorted(vn_matrix.special_case_version_matrix(meta, index))
 
         if extra_conditions:
             cases = list(vn_matrix.filter_cases(cases, extra_conditions))

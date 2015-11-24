@@ -1,6 +1,9 @@
 import argparse
+import logging
+
 import conda_build_all
 import conda_build_all.builder
+import conda_build_all.artefact_destination as artefact_dest
 
 
 def main():
@@ -10,19 +13,22 @@ def main():
 
     parser.add_argument('recipes',
                         help='The folder containing conda recipes to build.')
-    parser.add_argument('--inspect-channel', nargs='*',
+    parser.add_argument('--inspect-channels', nargs='*',
                         help=('Skip a build if the equivalent disribution is already '
                               'available in the specified channel.'))
-    parser.add_argument('--inspect-directory', nargs='*',
+    parser.add_argument('--inspect-directories', nargs='*',
                         help='Skip a build if the equivalent disribution is already available in the specified directory.')
     parser.add_argument('--no-inspect-conda-bld-directory', default=True, action='store_false',
                         help='Skip a build if the equivalent disribution is already in the conda-bld directory.')
-    parser.add_argument('--build-artefact-destination', nargs='*',
+    parser.add_argument('--build-artefact-destinations', nargs='*', default=[],
                         help=('The channel(s) to upload built distributions to. It is '
                               'rare to specify this without the --inspect-channel argument. '
                               'If a file:// channel, the build will be copied to the directory. '
                               'If a url:// channel, the build will be uploaded with the anaconda '
                               'client functionality.'))
+    parser.add_argument('--upload-channels', nargs='*', default=[],
+                        help='The channel(s) to upload built distributions to.')
+
 
     parser.add_argument("--matrix-conditions", nargs='*', default=[],
                         help="Extra conditions for computing the build matrix.")
@@ -43,12 +49,20 @@ def main():
 
     max_n_versions = (args.matrix_max_n_major_versions,
                       args.matrix_max_n_minor_versions)
-    inspection_directories = args.inspect_directory or []
+    inspection_directories = args.inspect_directories or []
     if not args.no_inspect_conda_bld_directory and os.path.isdir(conda_build.config.bldpkgs_dir):
         inspection_directories.append(conda_build.config.bldpkgs_dir)
-    b = conda_build_all.builder.Builder(args.recipes, args.inspect_channel,
+
+    artefact_destinations = []
+    for channel in args.upload_channels:
+        artefact_destinations.append(artefact_dest.AnacondaClientChannelDest.from_spec(channel))
+
+    artefact_dest.log.setLevel(logging.INFO)
+    artefact_dest.log.addHandler(logging.StreamHandler())
+
+    b = conda_build_all.builder.Builder(args.recipes, args.inspect_channels,
                                         inspection_directories,
-                                        args.build_artefact_destination,
+                                        artefact_destinations,
                                         args.matrix_conditions,
                                         max_n_versions)
     b.main()

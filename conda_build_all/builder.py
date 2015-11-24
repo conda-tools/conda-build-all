@@ -84,23 +84,31 @@ class Builder(object):
                  matrix_conditions, matrix_max_n_major_minor_versions=(2, 2)):
         """
         Build a directory of conda recipes sequentially, if they don't already exist in the inspection locations.
-#        If the build does exist on the binstar account, but isn't in the targeted channel, it will be added to artefact_destinations,
-        All newly-built distributions will be uploaded to artefact_destinations. If any destination is file:// based, it will be copied,
-        if url:// it will be uploaded with anaconda-client.
+
+        Parameters
+        ----------
+        conda_recipes_directory : string
+            The path to the directory in which to look for conda recipes.
+        inspection_channels : iterable
+            The conda channels to inspect to determine whether a recipe has already been built.
+        inspection_directories : iterable
+            The local directories to inspect to determine whether a recipe has already been built.
+        artefact_destinations : iterable of conda_build_all.artefact_destination.ArtefactDestination
+            The destinations for the built artefact to go to.
+        matrix_conditions : iterable of conda specifications
+            The conditions to apply when determining whether a recipe should be built
+        matrix_max_n_major_minor_versions : pair of ints
+            The number of major and minor versions to preserve for each resolved recipe. For instance,
+            if a recipe can be built against np 1.7, 1.8 and 1.9, and the number of minor versions is 2,
+            the build matrix will prune the 1.7 option.
 
         """
         self.conda_recipes_directory = conda_recipes_directory
         self.inspection_channels = inspection_channels
         self.inspection_directories = inspection_directories
-        self.artefact_destinations = artefact_destinations or []
+        self.artefact_destinations = artefact_destinations
         self.matrix_conditions = matrix_conditions
         self.matrix_max_n_major_minor_versions = matrix_max_n_major_minor_versions
-
-        self.upload_owner = 'pelson'
-        self.upload_channel = 'dev'
-
-        self.anaconda_cli = None
-        # get_binstar(Namespace(token=self.binstar_token, site=None))
 
     def fetch_all_metas(self):
         """
@@ -142,24 +150,37 @@ class Builder(object):
         with meta.vn_context():
             build.build(meta.meta)
 
+    def compute_build_distros(self, index, recipes):
+        """
+        Given the recipes which are to be built, return a list of BakedDistribution instances
+        for all distributions that should be built.
+
+        """
+        all_distros = []
+        index = index.copy()
+        for meta in recipes:
+            distros = resolved_distribution.ResolvedDistribution.resolve_all(meta, index,
+                                                                             self.matrix_conditions)
+            cases = [distro.special_versions for distro in distros]
+            cases = list(vn_matrix.keep_top_n_major_versions(cases, n=self.matrix_max_n_major_minor_versions[0]))
+            cases = list(vn_matrix.keep_top_n_minor_versions(cases, n=self.matrix_max_n_major_minor_versions[1]))
+            for distro in distros:
+                if distro.special_versions in cases:
+                    # Update the index with this distribution so that it can be considered by the version matrix.
+                    if distro.name() == 'python' and distro.pkg_fn() not in index:
+                        index[distro.pkg_fn()] = distro.info_index()
+
+                    all_distros.append(distro)
+
+        return all_distros
+
     def main(self):
         recipe_metas = self.fetch_all_metas()
         index = get_index(use_cache=True)
 
         print('Resolving distributions from {} recipes... '.format(len(recipe_metas)))
 
-        all_distros = []
-        for meta in recipe_metas:
-            distros = resolved_distribution.ResolvedDistribution.resolve_all(meta, index,
-                                                       getattr(self, 'extra_build_conditions', []))
-            # TODO: Update the index with the new distros (see https://github.com/pelson/Obvious-CI/issues/25)
-            distro_cases = {distro.special_versions: distro for distro in distros}
-            cases = list(vn_matrix.keep_top_n_major_versions(distro_cases.keys(), n=self.matrix_max_n_major_minor_versions[0]))
-            cases = list(vn_matrix.keep_top_n_minor_versions(cases, n=self.matrix_max_n_major_minor_versions[1]))
-            for distro in distros:
-                if distro.special_versions in cases:
-                    all_distros.append(distro)
-
+        all_distros = self.compute_build_distros(index, recipe_metas)
         print('Computed that there are {} distributions from the {} '
               'recipes:'.format(len(all_distros), len(recipe_metas)))
         recipes_and_dist_locn = self.find_existing_built_dists(all_distros)
@@ -169,11 +190,12 @@ class Builder(object):
                            for meta, dist_locn in recipes_and_dist_locn])))
  
         for meta, built_dist_location in recipes_and_dist_locn:
-            if built_dist_location is None:
+            was_built = built_dist_location is None
+            if was_built:
                 built_dist_location = self.build(meta)
-            self.post_build(meta, built_dist_location)
+            self.post_build(meta, built_dist_location, was_built)
 
-    def post_build(self, meta, built_dist_location):
+    def post_build(self, meta, built_dist_location, was_built):
         """
         The post build phase occurs whether or not a build has actually taken place.
         It is the point at which a distribution is transfered to the desired artefact
@@ -188,6 +210,5 @@ class Builder(object):
 
         """
         for artefact_destination in self.artefact_destinations:
-            print('arti:', artefact_destination)
-            #            artefact_destination.make_available(meta, built_dist_location)
+            artefact_destination.make_available(meta, built_dist_location, was_built)
 

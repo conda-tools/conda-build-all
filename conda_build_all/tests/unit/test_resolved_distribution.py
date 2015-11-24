@@ -61,7 +61,7 @@ class Test_BakedDistribution_resolve_all(RecipeCreatingUnit):
         self.index.add_pkg('python', '3.5.0')
         self.index.add_pkg('numpy', '1.8.0', depends=['python'])
         resolved = ResolvedDistribution.resolve_all(meta, self.index)
-        ids = sorted(dist.build_id() for dist in resolved)
+        ids = [dist.build_id() for dist in resolved]
         self.assertEqual(ids, ['np18py27_0', 'np18py35_0'])
 
     def test_skip_build(self):
@@ -81,7 +81,7 @@ class Test_BakedDistribution_resolve_all(RecipeCreatingUnit):
         self.index.add_pkg('python', '2.6.2')
         self.index.add_pkg('python', '3.5.0')
         resolved = ResolvedDistribution.resolve_all(meta, self.index)
-        ids = sorted(dist.build_id() for dist in resolved)
+        ids = [dist.build_id() for dist in resolved]
         self.assertEqual(ids, ['py26_0', 'py27_0'])
 
     def test_extra_conditions(self):
@@ -99,7 +99,7 @@ class Test_BakedDistribution_resolve_all(RecipeCreatingUnit):
         self.index.add_pkg('python', '3.5.0')
         resolved = ResolvedDistribution.resolve_all(meta, self.index,
                                        extra_conditions=['python 2.6.*|>=3'])
-        ids = sorted(dist.build_id() for dist in resolved)
+        ids = [dist.build_id() for dist in resolved]
         self.assertEqual(ids, ['py26_0', 'py35_0'])
 
 
