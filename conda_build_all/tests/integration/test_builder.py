@@ -26,7 +26,8 @@ class RecipeCreatingUnit(unittest.TestCase):
 
     def write_meta(self, recipe_dir_name, spec):
         recipe_dir = os.path.join(self.recipes_root_dir, recipe_dir_name)
-        os.mkdir(recipe_dir)
+        if not os.path.exists(recipe_dir):
+            os.makedirs(recipe_dir)
         with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
             fh.write(textwrap.dedent(spec))
         return MetaData(recipe_dir)
