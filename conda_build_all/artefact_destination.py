@@ -10,6 +10,7 @@ from __future__ import print_function
 
 import logging
 import os
+import shutil
 import subprocess
 from argparse import Namespace
 
@@ -46,6 +47,20 @@ class ArtefactDestination(object):
 
         """
         pass
+
+
+class DirectoryDestination(ArtefactDestination):
+    def __init__(self, directory):
+        self.directory = os.path.abspath(os.path.expanduser(directory))
+        if not os.path.exists(self.directory):
+            os.makedirs(self.directory)
+        if not os.path.isdir(self.directory):
+            raise IOError("The destination provided is not a directory.")
+
+    def make_available(self, meta, built_dist_path, just_built):
+        if just_built:
+            print(meta, built_dist_path, just_built)
+            shutil.copy(built_dist_path, self.directory)
 
 
 class AnacondaClientChannelDest(ArtefactDestination):

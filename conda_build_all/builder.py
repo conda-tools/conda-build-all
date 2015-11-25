@@ -149,7 +149,7 @@ class Builder(object):
     def build(self, meta):
         print('Building ', meta.dist())
         with meta.vn_context():
-            build.build(meta.meta)
+            return bldpkg_path(build.build(meta.meta))
 
     def compute_build_distros(self, index, recipes):
         """
