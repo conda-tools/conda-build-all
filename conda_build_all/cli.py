@@ -20,15 +20,10 @@ def main():
                         help='Skip a build if the equivalent disribution is already available in the specified directory.')
     parser.add_argument('--no-inspect-conda-bld-directory', default=True, action='store_false',
                         help='Skip a build if the equivalent disribution is already in the conda-bld directory.')
-    parser.add_argument('--build-artefact-destinations', nargs='*', default=[],
-                        help=('The channel(s) to upload built distributions to. It is '
-                              'rare to specify this without the --inspect-channel argument. '
-                              'If a file:// channel, the build will be copied to the directory. '
-                              'If a url:// channel, the build will be uploaded with the anaconda '
-                              'client functionality.'))
+    parser.add_argument('--artefact-directory',
+                        help='A directory for any newly built distributions to be placed.')
     parser.add_argument('--upload-channels', nargs='*', default=[],
                         help='The channel(s) to upload built distributions to.')
-
 
     parser.add_argument("--matrix-conditions", nargs='*', default=[],
                         help="Extra conditions for computing the build matrix.")
@@ -56,6 +51,8 @@ def main():
     artefact_destinations = []
     for channel in args.upload_channels:
         artefact_destinations.append(artefact_dest.AnacondaClientChannelDest.from_spec(channel))
+    if args.artefact_directory:
+        artefact_destinations.append(artefact_dest.DirectoryDestination(args.artefact_directory))
 
     artefact_dest.log.setLevel(logging.INFO)
     artefact_dest.log.addHandler(logging.StreamHandler())

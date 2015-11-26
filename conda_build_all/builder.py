@@ -46,21 +46,33 @@ def distribution_exists(binstar_cli, owner, metadata):
     return exists
 
 
-def fetch_metas(directory):
+def list_metas(directory, max_depth=0):
     """
     Get the build metadata of all recipes in a directory.
 
-    The recipes will be sorted by the order of their directory name.
+    The order of metas from this function is not guaranteed.
+
+    Parameters
+    ----------
+    directory
+        Where to start looking for metas using os.walk.
+    max_depth : int
+        How deep to recurse when looking for recipes. 
+        A value ``<=0`` will recurse indefinitely. A value of 1
+        will look in the given directory for a meta.yaml.
+        (default: 0)
 
     """
     packages = []
-    for package_name in sorted(os.listdir(directory)):
-        package_dir = os.path.join(directory, package_name)
-        meta_yaml = os.path.join(package_dir, 'meta.yaml')
-
-        if os.path.isdir(package_dir) and os.path.exists(meta_yaml):
-            packages.append(MetaData(package_dir))
-
+    current_depth = max_depth
+    root = os.path.normpath(directory)
+    for new_root, dirs, files in os.walk(root):
+        depth = new_root[len(root):].count(os.path.sep) + 1
+        if max_depth > 0 and depth >= max_depth:
+            del dirs[:]
+ 
+        if 'meta.yaml' in files:
+            packages.append(MetaData(new_root))
     return packages
 
 
@@ -117,7 +129,7 @@ class Builder(object):
 
         """
         conda_recipes_directory = os.path.abspath(os.path.expanduser(self.conda_recipes_directory))
-        recipe_metas = fetch_metas(conda_recipes_directory)
+        recipe_metas = list_metas(conda_recipes_directory)
         recipe_metas = sort_dependency_order(recipe_metas)
         return recipe_metas
 
@@ -149,7 +161,7 @@ class Builder(object):
     def build(self, meta):
         print('Building ', meta.dist())
         with meta.vn_context():
-            build.build(meta.meta)
+            return bldpkg_path(build.build(meta.meta))
 
     def compute_build_distros(self, index, recipes):
         """

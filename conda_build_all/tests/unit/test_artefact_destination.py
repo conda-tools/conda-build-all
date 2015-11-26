@@ -3,13 +3,16 @@ from contextlib import contextmanager
 import logging
 import mock
 import os
+import shutil
 import sys
+import tempfile
 import unittest
 
 
 from conda_build_all.tests.unit.dummy_index import DummyIndex, DummyPackage
 from conda_build_all.artefact_destination import (ArtefactDestination,
-                                                  AnacondaClientChannelDest)
+                                                  AnacondaClientChannelDest,
+                                                  DirectoryDestination)
 import conda_build_all.artefact_destination
 
 
@@ -108,6 +111,26 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
         self.assertEqual(dest.token, 'a test token')
         self.assertEqual(dest.owner, 'testing_owner')
         self.assertEqual(dest.channel, 'my_channel')
+
+
+class Test_DirectoryDestination(unittest.TestCase):
+    def setUp(self):
+        self.tmp_dir = tempfile.mkdtemp(prefix='recipes')
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp_dir)
+
+    def test_not_copying(self):
+        dd = DirectoryDestination(self.tmp_dir)
+        dd.make_available(mock.sentinel.dummy_meta, mock.sentinel.dummy_path,
+                          just_built=False)
+
+    def test_copying(self):
+        dd = DirectoryDestination(self.tmp_dir)
+        with mock.patch('shutil.copy') as copy:
+            dd.make_available(mock.sentinel.dummy_meta, mock.sentinel.dummy_path,
+                              just_built=True)
+        copy.assert_called_once_with(mock.sentinel.dummy_path, self.tmp_dir)
 
 
 if __name__ == '__main__':

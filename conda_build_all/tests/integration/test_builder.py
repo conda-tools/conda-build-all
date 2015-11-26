@@ -7,6 +7,7 @@ import unittest
 
 from conda_build.metadata import MetaData
 
+from conda_build_all.resolved_distribution import ResolvedDistribution
 from conda_build_all.builder import Builder
 from conda_build_all.tests.unit.dummy_index import DummyIndex
 
@@ -25,10 +26,26 @@ class RecipeCreatingUnit(unittest.TestCase):
 
     def write_meta(self, recipe_dir_name, spec):
         recipe_dir = os.path.join(self.recipes_root_dir, recipe_dir_name)
-        os.mkdir(recipe_dir)
+        if not os.path.exists(recipe_dir):
+            os.makedirs(recipe_dir)
         with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
             fh.write(textwrap.dedent(spec))
         return MetaData(recipe_dir)
+
+
+class Test_build(RecipeCreatingUnit):
+    def test(self):
+        pkg1 = self.write_meta('pkg1', """
+                    package:
+                        name: pkg1
+                        version: 1.0
+                    """)
+        pkg1_resolved = ResolvedDistribution(pkg1, (()))
+        builder = Builder(None, None, None, None, None)
+        r = builder.build(pkg1_resolved)
+        self.assertTrue(os.path.exists(r))
+        self.assertEqual(os.path.abspath(r), r)
+        self.assertEqual(os.path.basename(r), 'pkg1-1.0-0.tar.bz2')
 
 
 class Test__find_existing_built_dists(RecipeCreatingUnit):
