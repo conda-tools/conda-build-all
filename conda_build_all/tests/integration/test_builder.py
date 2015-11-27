@@ -143,7 +143,17 @@ class Test_compute_build_distros(RecipeCreatingUnit):
                     build:
                         number: 1
                     """),
-                 self.write_meta('py_pacakge', """
+                 self.write_meta('np110', """
+                    package:
+                        name: numpy
+                        version: 1.10
+                    requirements:
+                        build:
+                            - python
+                        run:
+                            - python
+                    """),
+                self.write_meta('py_package', """
                     package:
                         name: my_py_package
                         version: 2.0
@@ -152,12 +162,15 @@ class Test_compute_build_distros(RecipeCreatingUnit):
                             - python
                         run:
                             - python
+                            - numpy
                     """)]
         builder = Builder(None, None, None, None, None)
         index = {}
         distributions = builder.compute_build_distros(index, metas)
         expected = ['python-2.7.0-0', 'python-3.3.0-0', 'python-3.4.24-0',
-                    'python-3.5.2-1', 'my_py_package-2.0-py27_0', 'my_py_package-2.0-py34_0',
+                    'python-3.5.2-1',
+                    'numpy-1.10-py27_0', 'numpy-1.10-py34_0', 'numpy-1.10-py35_0',
+                    'my_py_package-2.0-py27_0', 'my_py_package-2.0-py34_0',
                     'my_py_package-2.0-py35_0']
         self.assertEqual([meta.dist() for meta in distributions], expected)
         # Check that we didn't change the index.
