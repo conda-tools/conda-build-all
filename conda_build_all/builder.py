@@ -180,9 +180,8 @@ class Builder(object):
             for distro in distros:
                 if distro.special_versions in cases:
                     # Update the index with this distribution so that it can be considered by the version matrix.
-                    if distro.name() == 'python' and distro.pkg_fn() not in index:
+                    if distro.pkg_fn() not in index:
                         index[distro.pkg_fn()] = distro.info_index()
-
                     all_distros.append(distro)
 
         return all_distros
