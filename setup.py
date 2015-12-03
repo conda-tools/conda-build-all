@@ -10,7 +10,9 @@ setup(
       author='Phil Elson',
       author_email='pelson.pub@gmail.com',
       url='https://github.com/scitools/conda-buildall',
-      packages=['conda_build_all'],
+      packages=['conda_build_all', 'conda_build_all.tests',
+                'conda_build_all.tests.integration',
+                'conda_build_all.tests.unit'],
       entry_points={
           'console_scripts': [
               'conda-build-all = conda_build_all.cli:main',
