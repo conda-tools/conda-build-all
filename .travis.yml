@@ -34,6 +34,7 @@ install:
     # Now do the things we need to do to install it.
     - conda install --file requirements.txt nose mock python=${PYTHON} --yes --quiet
     - python setup.py install
+    - mkdir not_the_source_root && cd not_the_source_root
 
 script:
     - nosetests conda_build_all
