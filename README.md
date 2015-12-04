@@ -154,7 +154,7 @@ Next, ``recipe_b`` has been identified to be built against the top two minor ver
 We've seen that we can build a *lot* of distributions for our simple recipes. We can tighten the build matrix somewhat by adding or own conditions:
 
 ```
-$ conda-build-all my_recipes --matrix-condition "python 3.*" "numpy 1.10.*"
+$ conda-build-all my_recipes --matrix-condition "python 3.5.*" "numpy >=1.8" --matrix-max-n-minor-versions=0
 Fetching package metadata: ........
 Resolving distributions from 2 recipes... 
 Computed that there are 4 distributions from the 2 recipes:
