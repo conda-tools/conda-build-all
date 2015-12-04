@@ -9,7 +9,8 @@ import conda_build_all.artefact_destination as artefact_dest
 def main():
     parser = argparse.ArgumentParser(description='Build many conda distributions.')
 
-    parser.add_argument('--version', action='version', version=conda_build_all.__version__)
+    parser.add_argument('--version', action='version', version=conda_build_all.__version__,
+                        help="Show conda-build-all's version, and exit.")
 
     parser.add_argument('recipes',
                         help='The folder containing conda recipes to build.')
@@ -19,14 +20,15 @@ def main():
     parser.add_argument('--inspect-directories', nargs='*',
                         help='Skip a build if the equivalent disribution is already available in the specified directory.')
     parser.add_argument('--no-inspect-conda-bld-directory', default=True, action='store_false',
-                        help='Skip a build if the equivalent disribution is already in the conda-bld directory.')
+                        help='Do not add the conda-build directory to the inspection list.')
+
     parser.add_argument('--artefact-directory',
                         help='A directory for any newly built distributions to be placed.')
     parser.add_argument('--upload-channels', nargs='*', default=[],
-                        help='The channel(s) to upload built distributions to.')
+                        help='The channel(s) to upload built distributions to (requires BINSTAR_TOKEN envioronment variable).')
 
     parser.add_argument("--matrix-conditions", nargs='*', default=[],
-                        help="Extra conditions for computing the build matrix.")
+                        help="Extra conditions for computing the build matrix (e.g. 'python 2.7.*').")
     parser.add_argument("--matrix-max-n-major-versions", default=2, type=int,
                         help=("When computing the build matrix, limit to the latest n major versions "
                               "(0 makes this unlimited). For example, if Python 1, 2 and Python 3 are "
