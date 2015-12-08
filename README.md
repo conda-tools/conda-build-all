@@ -64,14 +64,16 @@ optional arguments:
                         (requires BINSTAR_TOKEN envioronment variable).
   --matrix-conditions [MATRIX_CONDITIONS [MATRIX_CONDITIONS ...]]
                         Extra conditions for computing the build matrix (e.g.
-                        'python 2.7.*').
+                        'python 2.7.*'). When set, the defaults for matrix-
+                        max-n-major-versions and matrix-max-n-minor-versions
+                        are set to 0 (i.e. no limit on the max n versions).
   --matrix-max-n-major-versions MATRIX_MAX_N_MAJOR_VERSIONS
                         When computing the build matrix, limit to the latest n
                         major versions (0 makes this unlimited). For example,
                         if Python 1, 2 and Python 3 are resolved by the recipe
                         and associated matrix conditions, only the latest N
                         major version will be used for the build matrix.
-                        (default: 2)
+                        (default: 2 if no matrix conditions)
   --matrix-max-n-minor-versions MATRIX_MAX_N_MINOR_VERSIONS
                         When computing the build matrix, limit to the latest n
                         minor versions (0 makes this unlimited). Note that
@@ -79,7 +81,8 @@ optional arguments:
                         also matrix-max-n-major-version). For example, if
                         Python 2 and Python 3 are resolved by the recipe and
                         associated matrix conditions, a total of Nx2 builds
-                        will be identified. (default: 2)
+                        will be identified. (default: 2 if no matrix
+                        conditions)
 ```
 
 
@@ -149,24 +152,24 @@ BUILD START: recipe_a-2.4-py26_0
 
 As you can see, these two unassuming recipes will result in more than 2 builds.
 In this case, ``recipe_a`` has been identified to be built against the top two minor versions of the top two major versions of Python - that is, py26, py27, py34, py35 (at the time of writing).
-Next, ``recipe_b`` has been identified to be built against the top two minor versions, of the top two major versions of Python *and* numpy. If all built distributions of python and numpy were available, there would be ``4 x 2`` permutations (4 being the number of Python versions available, and 2 being the number of numpy versions, assuming there exists only 1 major version of numpy, otherwise this would double to 4).
+Next, ``recipe_b`` has been identified to be built against the top two minor versions of the top two major versions of Python *and* numpy.
+If all built distributions of python and numpy were available, there would be ``4 x 2`` permutations (4 being the number of Python versions available, and 2 being the number of numpy versions, assuming there exists only 1 major version of numpy, otherwise this would double to 4).
 
 We've seen that we can build a *lot* of distributions for our simple recipes. We can tighten the build matrix somewhat by adding or own conditions:
 
 ```
-$ conda-build-all my_recipes --matrix-condition "python 3.5.*" "numpy >=1.8" --matrix-max-n-minor-versions=0
+$ conda-build-all my_recipes --matrix-condition "python 3.5.*" "numpy >=1.8"
 Fetching package metadata: ........
 Resolving distributions from 2 recipes... 
-Computed that there are 4 distributions from the 2 recipes:
+Computed that there are 3 distributions from the 2 recipes:
 Resolved dependencies, will be built in the following order: 
-    recipe_a-2.4-py34_0 (will be built: True)
     recipe_a-2.4-py35_0 (will be built: True)
-    recipe_b-3.2-np110py34_0 (will be built: True)
     recipe_b-3.2-np110py35_0 (will be built: True)
+    recipe_b-3.2-np19py35_0 (will be built: True)
 ...
 ```
 
-Here we've used the language provided to us by conda to limit the build matrix to a smaller number of combinations. Alternatively we could use the max n major and minor arguments to limit the scope:
+Here we've used the language provided to us by conda to limit the build matrix to a smaller number of combinations. Alternatively we could use the max ``N`` major and minor arguments to limit the scope:
 
 ```
 $ conda-build-all my_recipes --matrix-max-n-minor-versions=1 --matrix-max-n-major-versions=1
