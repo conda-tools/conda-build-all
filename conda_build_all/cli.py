@@ -62,7 +62,6 @@ def main():
                       args.matrix_max_n_minor_versions)
 
     inspection_directories = args.inspect_directories or []
-    print(args)
     if (not args.no_inspect_conda_bld_directory and
             os.path.isdir(conda_build.config.config.bldpkgs_dir)):
         inspection_directories.append(conda_build.config.config.bldpkgs_dir)
