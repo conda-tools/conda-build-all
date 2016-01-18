@@ -1,6 +1,7 @@
 # TODO: Pull this back together with conda_manifest.
 import os
 from contextlib import contextmanager
+from collections import defaultdict
 
 import conda.resolve
 from conda.resolve import MatchSpec
@@ -104,8 +105,22 @@ def special_case_version_matrix(meta, index):
     requirement_specs = {MatchSpec(spec).name: MatchSpec(spec)
                          for spec in requirements}
     run_requirements = meta.get_value('requirements/run', [])
-    run_requirement_specs = {MatchSpec(spec).name: MatchSpec(spec)
-                             for spec in run_requirements}
+
+    run_requirement_specs = defaultdict(list)
+    # Generate a list of requirements for each spec name to ensure that
+    # multi-line specs are handled.
+    for spec in run_requirements:
+        run_requirement_specs[MatchSpec(spec).name].append(spec)
+
+    # Combine multi-line specs into a single line by assuming the requirements
+    # should be and-ed.
+    for spec_name, spec_list in run_requirement_specs.iteritems():
+        run_requirement_specs[spec_name] = ','.join(spec_list)
+
+    # Turn these into MatchSpecs.
+    run_requirement_specs = {name: MatchSpec(spec)
+                             for name, spec in run_requirement_specs.iteritems()}
+
 
     # Thanks to https://github.com/conda/conda-build/pull/493 we no longer need to
     # compute the complex matrix for numpy versions unless a specific version has
@@ -133,7 +148,7 @@ def special_case_version_matrix(meta, index):
     unsolvable_cases = set()
 
     def add_case_if_soluble(case):
-        # Whilst we strictly don't need to, shortcutting cases we've already seen makes a 
+        # Whilst we strictly don't need to, shortcutting cases we've already seen makes a
         # *huge* performance difference.
         if case in cases | unsolvable_cases:
             return
