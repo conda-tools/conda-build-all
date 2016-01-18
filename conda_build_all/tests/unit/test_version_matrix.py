@@ -113,6 +113,85 @@ class Test_special_case_version_matrix(unittest.TestCase):
     #                            ])
     #                     )
 
+    def test_numpy_xx(self):
+        """
+        Check whether the numpy x.x version spec generates the right cases.
+        """
+
+        # Build an index that contains numpy 1.9 and 1.10 on python 2.7 and
+        # 3.5 for a total of 4 numpy/python combinations.
+        pythons = ['2.7', '3.5']
+        # Only major/minor in the numpy list here because that is what is used
+        # for the build matrix.
+        numpys = ['1.9', '1.10']
+        for python_version in pythons:
+            python_build_string = 'py' + python_version.replace('.', '')
+            self.index.add_pkg('python', python_version)
+            for numpy_version in numpys:
+                # Add a patch version to each numpy since that is how the
+                # versions are numbered.
+                self.index.add_pkg('numpy',
+                                   numpy_version + '.2',
+                                   python_build_string,
+                                   depends=['python'])
+
+        # Cases to check
+        numpy_dep_cases = []
+        expect_result = []
+
+        # Case 1:
+        #   Only a numpy x.x spec, expect all four cases to be in the matrix.
+
+        # Add case.
+        numpy_dep_cases.append(('numpy x.x', 'python'))
+        # Generate expected results for this case.
+        results = []
+        for python in pythons:
+            for numpy in numpys:
+                results.append((('python', python), ('numpy', numpy)))
+
+        expect_result.append(results)
+
+        # Case 2:
+        #   A numpy x.x spec and a numpy version restriction which does NOT
+        #   exclude any of the cases in the DummyIndex. Again, expect all
+        #   four cases to be in the result.
+
+        # Add case.
+        numpy_dep_cases.append(('numpy x.x', 'numpy >1.6', 'python'))
+
+        # Generate expected results for this case.
+        results = []
+        for python in pythons:
+            for numpy in numpys:
+                results.append((('python', python), ('numpy', numpy)))
+        expect_result.append(results)
+
+        # Case 3:
+        #   A numpy x.x spec and a numpy version restriction which does
+        #   eliminate one the numpy versions in the DummyIndex. Expect only
+        #   the numpy 1.9 case to survive.
+
+        # Add case 3.
+        numpy_dep_cases.append(('numpy x.x', 'numpy >=1.10', 'python'))
+
+        # Generate expected results for case 3.
+        results = []
+        for python in pythons:
+            for numpy in numpys[1:]:
+                results.append((('python', python), ('numpy', numpy)))
+        expect_result.append(results)
+
+        for dep, result in zip(numpy_dep_cases, expect_result):
+            print(dep)
+            a = DummyPackage('pkgA', dep, dep)
+
+            r = special_case_version_matrix(a, self.index)
+            print(len(r))
+            print(r)
+            print(result)
+            assert set(r) == set(result)
+
 
 class CasesTestCase(unittest.TestCase):
     def setUp(self):
