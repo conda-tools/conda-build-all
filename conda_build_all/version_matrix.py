@@ -73,6 +73,41 @@ def conda_special_versions(meta, index, version_matrix=None):
             yield case
 
 
+def parse_specifications(requirements):
+    """
+    Parse a list of specifications, turning multi-line specifications into
+    a single specification.
+    """
+    requirement_specs = defaultdict(list)
+    # Generate a list of requirements for each spec name to ensure that
+    # multi-line specs are handled.
+    for spec in requirements:
+        spec_details = spec.split()
+        if len(spec_details) == 2:
+            # Package name and version spec were given, append the
+            # version spec.
+            requirement_specs[MatchSpec(spec).name].append(spec_details[1])
+        elif len(spec_details) == 1:
+            # Only package name given (e.g. 'numpy'), so an empty list works.
+            requirement_specs[MatchSpec(spec).name] = []
+        else:
+            # Three-part specification, which includes a build string. Add
+            # both the second and third part to the list.
+            full_spec = ' '.join(spec_details[1:])
+            requirement_specs[MatchSpec(spec).name].append(full_spec)
+
+    # Combine multi-line specs into a single line by assuming the requirements
+    # should be and-ed.
+    for spec_name, spec_list in requirement_specs.items():
+        requirement_specs[spec_name] = ','.join(spec_list)
+
+    # Turn these into MatchSpecs.
+    requirement_specs = {name: MatchSpec(' '.join([name, spec]))
+                         for name, spec in requirement_specs.items()}
+
+    return requirement_specs
+
+
 def special_case_version_matrix(meta, index):
     """
     Return the non-orthogonal version matrix for special software within conda
@@ -101,26 +136,12 @@ def special_case_version_matrix(meta, index):
 
     """
     r = conda.resolve.Resolve(index)
+
     requirements = meta.get_value('requirements/build', [])
-    requirement_specs = {MatchSpec(spec).name: MatchSpec(spec)
-                         for spec in requirements}
+    requirement_specs = parse_specifications(requirements)
+
     run_requirements = meta.get_value('requirements/run', [])
-
-    run_requirement_specs = defaultdict(list)
-    # Generate a list of requirements for each spec name to ensure that
-    # multi-line specs are handled.
-    for spec in run_requirements:
-        run_requirement_specs[MatchSpec(spec).name].append(spec)
-
-    # Combine multi-line specs into a single line by assuming the requirements
-    # should be and-ed.
-    for spec_name, spec_list in run_requirement_specs.iteritems():
-        run_requirement_specs[spec_name] = ','.join(spec_list)
-
-    # Turn these into MatchSpecs.
-    run_requirement_specs = {name: MatchSpec(spec)
-                             for name, spec in run_requirement_specs.iteritems()}
-
+    run_requirement_specs = parse_specifications(run_requirements)
 
     # Thanks to https://github.com/conda/conda-build/pull/493 we no longer need to
     # compute the complex matrix for numpy versions unless a specific version has
