@@ -133,7 +133,7 @@ class Test_special_case_version_matrix(unittest.TestCase):
                 self.index.add_pkg('numpy',
                                    numpy_version + '.2',
                                    python_build_string,
-                                   depends=['python'])
+                                   depends=['python ' + python_version])
 
         # Cases to check
         numpy_dep_cases = []
@@ -187,10 +187,8 @@ class Test_special_case_version_matrix(unittest.TestCase):
             a = DummyPackage('pkgA', dep, dep)
 
             r = special_case_version_matrix(a, self.index)
-            print(len(r))
-            print(r)
-            print(result)
-            assert set(r) == set(result)
+            self.assertEqual(set(r), set(result),
+                             msg='got: {}\nexpected: {}'.format(r, result))
 
 
 class CasesTestCase(unittest.TestCase):
