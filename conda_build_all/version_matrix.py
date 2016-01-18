@@ -156,8 +156,19 @@ def special_case_version_matrix(meta, index):
     for pkg in requirement_specs:
         spec = requirement_specs[pkg]
         # We want to bake the version in, but we don't know what it is yet.
-        if spec.spec.endswith(' x.x'):
-            requirement_specs[pkg] = MatchSpec(spec.spec[:-4])
+        if 'x.x' in spec.spec:
+            # Remove the x.x part of the specification, assuming that if it
+            # is present with other specifications they are and-ed together,
+            # i.e. comma-separated.
+            name, specification = spec.spec.split()
+            spec_list = specification.split(',')
+            no_xx = [s for s in spec_list if s != 'x.x']
+            new_spec = ','.join(no_xx)
+            if new_spec:
+                ms = MatchSpec(' '.join([name, new_spec]))
+            else:
+                ms = MatchSpec(name)
+            requirement_specs[pkg] = ms
 
     def minor_vn(version_str):
         """
