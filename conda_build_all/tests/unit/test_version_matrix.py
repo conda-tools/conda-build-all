@@ -191,6 +191,62 @@ class Test_special_case_version_matrix(unittest.TestCase):
                              msg='got: {}\nexpected: {}'.format(r, result))
 
 
+class Test_parse_specification(unittest.TestCase):
+    def test_specification_no_duplicates(self):
+        # Do specifications that are all on one-liners get handled correctly?
+        input_spec = ['numpy', 'scipy', 'python']
+        expected_match_spec = [MatchSpec(spec) for spec in input_spec]
+        expected_output = {ms.name: ms for ms in expected_match_spec}
+
+        output_spec = parse_specifications(input_spec)
+        self.assertEqual(expected_output, output_spec)
+
+    def test_specification_duplicates_with_version(self):
+        # If there are duplicates lines in the specifications, and each
+        # contains a non-trivial version specification, do they get combined
+        # as expected?
+        input_spec = ['numpy >=1.7', 'numpy <1.10', 'python']
+        expected_match_spec = [MatchSpec(spec) for spec in ['numpy >=1.7,<1.10', 'python']]
+        expected_output = {ms.name: ms for ms in expected_match_spec}
+        output_spec = parse_specifications(input_spec)
+        self.assertEqual(expected_output, output_spec)
+
+    def test_three_part_spec_preserved(self):
+        # A conda specification may contain up to three parts. Make sure those
+        # are preserved.
+
+        input_spec = ['numpy 1.8.1 py27_0', 'python']
+        expected_match_spec = [MatchSpec(spec) for spec in input_spec]
+        expected_output = {ms.name: ms for ms in expected_match_spec}
+        output_spec = parse_specifications(input_spec)
+        self.assertEqual(expected_output, output_spec)
+
+    def test_multiline_spec_with_one_three_part_spec(self):
+        # The expected output here is to have the specifications combined
+        # with a comma even though the result is not a valid conda version
+        # specification. However, the original multi-line version is not
+        # valid either.
+
+        input_spec = ['numpy 1.8.1 py27_0', 'numpy 1.8*', 'python']
+        expected_match_spec = [MatchSpec(spec) for spec
+                               in ['numpy 1.8.1 py27_0,1.8*', 'python']]
+        expected_output = {ms.name: ms for ms in expected_match_spec}
+        output_spec = parse_specifications(input_spec)
+        self.assertEqual(expected_output, output_spec)
+
+    def test_specification_with_blank(self):
+        # Does a multiline specification, one of which is just the package
+        # name, properly combine the other specifications on the other lines?
+
+        input_spec = ('numpy 1.9', 'numpy', 'numpy <1.11', 'python 2.7')
+
+        expected_match_spec = [MatchSpec(spec) for spec
+                               in ['numpy 1.9,<1.11', 'python 2.7']]
+        expected_output = {ms.name: ms for ms in expected_match_spec}
+        output_spec = parse_specifications(input_spec)
+        self.assertEqual(expected_output, output_spec)
+
+
 class CasesTestCase(unittest.TestCase):
     def setUp(self):
         self.item = {
