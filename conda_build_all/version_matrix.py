@@ -82,19 +82,15 @@ def parse_specifications(requirements):
     # Generate a list of requirements for each spec name to ensure that
     # multi-line specs are handled.
     for spec in requirements:
-        spec_details = spec.split()
+        spec_details = spec.split(None, 1)
         if len(spec_details) == 2:
             # Package name and version spec were given, append the
             # version spec.
             requirement_specs[MatchSpec(spec).name].append(spec_details[1])
-        elif len(spec_details) == 1:
-            # Only package name given (e.g. 'numpy'), so an empty list works.
+        elif spec_details[0] not in requirement_specs:
+            # Only package name given (e.g. 'numpy'), and the package name is
+            # not in the requirements yet, so add an empty list.
             requirement_specs[MatchSpec(spec).name] = []
-        else:
-            # Three-part specification, which includes a build string. Add
-            # both the second and third part to the list.
-            full_spec = ' '.join(spec_details[1:])
-            requirement_specs[MatchSpec(spec).name].append(full_spec)
 
     # Combine multi-line specs into a single line by assuming the requirements
     # should be and-ed.

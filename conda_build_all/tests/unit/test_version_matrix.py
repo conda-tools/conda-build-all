@@ -1,7 +1,10 @@
 import unittest
 
 import conda.config
-from conda_build_all.version_matrix import (special_case_version_matrix,
+from conda.resolve import MatchSpec
+
+from conda_build_all.version_matrix import (parse_specifications,
+                                            special_case_version_matrix,
                                             filter_cases,
                                             keep_top_n_major_versions,
                                             keep_top_n_minor_versions)
