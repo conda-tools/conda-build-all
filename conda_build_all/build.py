@@ -19,12 +19,19 @@ from . import inspect_binstar
 def build(meta, test=True):
     """Build (and optionally test) a recipe directory."""
     with Locked(conda_build.config.croot):
+        # Check whether verbose is a module-level variable in
+        # this version of conda_build and set it properly if it is.
+        if 'verbose' in dir(build_module):
+            build_module.verbose = False
+            kwd = {}
+        else:
+            kwd = {'verbose': False}
         meta.check_fields()
         if os.path.exists(conda_build.config.config.info_dir):
             shutil.rmtree(conda_build.config.config.info_dir)
-        build_module.build(meta, verbose=False, post=None)
+        build_module.build(meta, post=None, **kwd)
         if test:
-            build_module.test(meta, verbose=False)
+            build_module.test(meta, **kwd)
         return meta
 
 
