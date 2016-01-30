@@ -102,7 +102,7 @@ def parse_specifications(requirements):
         requirement_specs[spec_name] = ','.join(spec_list)
 
     # Turn these into MatchSpecs.
-    requirement_specs = {name: MatchSpec(' '.join([name, spec]))
+    requirement_specs = {name: MatchSpec(' '.join([name, spec]).strip())
                          for name, spec in requirement_specs.items()}
 
     return requirement_specs
