@@ -182,6 +182,12 @@ def special_case_version_matrix(meta, index):
         if 'r' in requirement_specs:
             raise NotImplementedError('R version matrix not yet implemented.')
 
+    # Deal with the fact that building a Python recipe itself requires a special case
+    # version. This comes down to the odd decision in
+    # https://github.com/conda/conda-build/commit/3dddeaf3cf5e85369e28c8f96e24c2dd655e36f0.
+    if meta.name() == 'python' and not cases:
+        cases.add((('python', meta.version()),))
+
     # Put an empty case in to allow simple iteration of the results.
     if not cases:
         cases.add(())

@@ -25,6 +25,13 @@ class Test_special_case_version_matrix(unittest.TestCase):
         r = special_case_version_matrix(a, self.index)
         self.assertEqual(r, set([()]))
 
+    def test_python_itself(self):
+        a = DummyPackage('python', version="abc")
+        r = special_case_version_matrix(a, self.index)
+        self.assertEqual(r, set(((('python', 'abc'),),
+                                ))
+                         )
+
     def test_python(self):
         a = DummyPackage('pkgA', ['python'])
         self.index.add_pkg('python', '2.7.2')
