@@ -6,19 +6,23 @@ import conda.config
 
 
 _DummyPackage = collections.namedtuple('_DummyPackage',
-                                       ['pkg_name', 'build_deps', 'run_deps'])
+                                       ['pkg_name', 'build_deps',
+                                        'run_deps', 'vn'])
 
 
 class DummyPackage(_DummyPackage):
-    def __new__(cls, name, build_deps=None, run_deps=None):
+    def __new__(cls, name, build_deps=None, run_deps=None, version='0.0'):
         return super(DummyPackage, cls).__new__(cls, name, build_deps or (),
-                                                run_deps or ())
+                                                run_deps or (), version)
 
     def name(self):
         return self.pkg_name
 
+    def version(self):
+        return self.vn
+
     def dist(self):
-        return '{}-{}-{}'.format(self.name(), '0.0', '0')
+        return '{}-{}-{}'.format(self.name(), self.version(), '0')
 
     def get_value(self, item, default):
         if item == 'requirements/run':
