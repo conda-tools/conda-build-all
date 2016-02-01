@@ -1,6 +1,7 @@
 # TODO: Pull this back together with conda_manifest.
 import os
 from contextlib import contextmanager
+from collections import defaultdict
 
 import conda.resolve
 from conda.resolve import MatchSpec
@@ -72,6 +73,37 @@ def conda_special_versions(meta, index, version_matrix=None):
             yield case
 
 
+def parse_specifications(requirements):
+    """
+    Parse a list of specifications, turning multi-line specifications into
+    a single specification.
+    """
+    requirement_specs = defaultdict(list)
+    # Generate a list of requirements for each spec name to ensure that
+    # multi-line specs are handled.
+    for spec in requirements:
+        spec_details = spec.split(None, 1)
+        if len(spec_details) == 2:
+            # Package name and version spec were given, append the
+            # version spec.
+            requirement_specs[MatchSpec(spec).name].append(spec_details[1])
+        elif spec_details[0] not in requirement_specs:
+            # Only package name given (e.g. 'numpy'), and the package name is
+            # not in the requirements yet, so add an empty list.
+            requirement_specs[MatchSpec(spec).name] = []
+
+    # Combine multi-line specs into a single line by assuming the requirements
+    # should be and-ed.
+    for spec_name, spec_list in requirement_specs.items():
+        requirement_specs[spec_name] = ','.join(spec_list)
+
+    # Turn these into MatchSpecs.
+    requirement_specs = {name: MatchSpec(' '.join([name, spec]).strip())
+                         for name, spec in requirement_specs.items()}
+
+    return requirement_specs
+
+
 def special_case_version_matrix(meta, index):
     """
     Return the non-orthogonal version matrix for special software within conda
@@ -100,12 +132,12 @@ def special_case_version_matrix(meta, index):
 
     """
     r = conda.resolve.Resolve(index)
+
     requirements = meta.get_value('requirements/build', [])
-    requirement_specs = {MatchSpec(spec).name: MatchSpec(spec)
-                         for spec in requirements}
+    requirement_specs = parse_specifications(requirements)
+
     run_requirements = meta.get_value('requirements/run', [])
-    run_requirement_specs = {MatchSpec(spec).name: MatchSpec(spec)
-                             for spec in run_requirements}
+    run_requirement_specs = parse_specifications(run_requirements)
 
     # Thanks to https://github.com/conda/conda-build/pull/493 we no longer need to
     # compute the complex matrix for numpy versions unless a specific version has
@@ -120,8 +152,19 @@ def special_case_version_matrix(meta, index):
     for pkg in requirement_specs:
         spec = requirement_specs[pkg]
         # We want to bake the version in, but we don't know what it is yet.
-        if spec.spec.endswith(' x.x'):
-            requirement_specs[pkg] = MatchSpec(spec.spec[:-4])
+        if 'x.x' in spec.spec:
+            # Remove the x.x part of the specification, assuming that if it
+            # is present with other specifications they are and-ed together,
+            # i.e. comma-separated.
+            name, specification = spec.spec.split()
+            spec_list = specification.split(',')
+            no_xx = [s for s in spec_list if s != 'x.x']
+            new_spec = ','.join(no_xx)
+            if new_spec:
+                ms = MatchSpec(' '.join([name, new_spec]))
+            else:
+                ms = MatchSpec(name)
+            requirement_specs[pkg] = ms
 
     def minor_vn(version_str):
         """
@@ -133,7 +176,7 @@ def special_case_version_matrix(meta, index):
     unsolvable_cases = set()
 
     def add_case_if_soluble(case):
-        # Whilst we strictly don't need to, shortcutting cases we've already seen makes a 
+        # Whilst we strictly don't need to, shortcutting cases we've already seen makes a
         # *huge* performance difference.
         if case in cases | unsolvable_cases:
             return
