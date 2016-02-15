@@ -92,9 +92,11 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
         ad = AnacondaClientChannelDest(mock.sentinel.token, owner, channel)
         ad._cli = client
         meta = DummyPackage('a', '2.1.0')
-        with self.dist_exists_setup(on_owner=False, on_channel=False):
-            with self.assertRaises(NotImplementedError):
-                ad.make_available(meta, mock.sentinel.dist_path, just_built=False)
+        for url in ['http://foo.bar/',
+                    'https://foo.bar/wibble']:
+            with self.dist_exists_setup(on_owner=False, on_channel=False):
+                with self.assertRaises(NotImplementedError):
+                    ad.make_available(meta, url, just_built=False)
 
     def test_from_spec_owner(self):
         spec = 'testing'
