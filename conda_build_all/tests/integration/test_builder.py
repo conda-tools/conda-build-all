@@ -11,18 +11,24 @@ from conda_build_all.resolved_distribution import ResolvedDistribution
 from conda_build_all.builder import Builder
 from conda_build_all.tests.unit.dummy_index import DummyIndex
 
+
 sample_recipes = os.path.join(os.path.dirname(__file__), 'test_recipes')
 
 
 class RecipeCreatingUnit(unittest.TestCase):
     def setUp(self):
         self.index = DummyIndex()
-        self.recipes_root_dir = tempfile.mkdtemp(prefix='recipes')
-        self.directories_to_remove = [self.recipes_root_dir]
+        self.directories_to_remove = []
+        self.recipes_root_dir = self.tmp_dir(prefix='recipes')
 
     def tearDown(self):
         for directory in self.directories_to_remove:
             shutil.rmtree(directory)
+
+    def tmp_dir(self, **mkdtemp_kwargs):
+        tmp_dir = tempfile.mkdtemp(**mkdtemp_kwargs)
+        self.directories_to_remove.append(tmp_dir)
+        return tmp_dir
 
     def write_meta(self, recipe_dir_name, spec):
         recipe_dir = os.path.join(self.recipes_root_dir, recipe_dir_name)

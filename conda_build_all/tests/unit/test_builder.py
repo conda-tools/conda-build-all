@@ -56,6 +56,16 @@ class Test_list_metas(RecipeCreatingUnit):
         names = [meta.name() for meta in metas]
         self.assertEqual(sorted(names), ['m1', 'm2', 'm3', 'm4'])
 
-   
+    def test_follow_symlink(self):
+        link_dir = self.tmp_dir(prefix='recipes_through_links')
+        os.symlink(os.path.join(self.recipes_root_dir, 'd1'),
+                os.path.join(link_dir, 'd1'))
+        os.symlink(os.path.join(self.recipes_root_dir, 'm1'),
+                os.path.join(link_dir, 'm1'))
+        metas = list_metas(link_dir)
+        names = [meta.name() for meta in metas]
+        self.assertEqual(sorted(names), ['m1', 'm3'])
+
+ 
 if __name__ == '__main__':
     unittest.main()

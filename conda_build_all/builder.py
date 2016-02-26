@@ -66,7 +66,7 @@ def list_metas(directory, max_depth=0):
     packages = []
     current_depth = max_depth
     root = os.path.normpath(directory)
-    for new_root, dirs, files in os.walk(root):
+    for new_root, dirs, files in os.walk(root, followlinks=True):
         depth = new_root[len(root):].count(os.path.sep) + 1
         if max_depth > 0 and depth >= max_depth:
             del dirs[:]
