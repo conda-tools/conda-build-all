@@ -1,4 +1,3 @@
-# TODO: Pull this back together with conda_manifest.
 import os
 from contextlib import contextmanager
 from collections import defaultdict
@@ -6,14 +5,11 @@ from collections import defaultdict
 import conda.resolve
 from conda.resolve import MatchSpec
 import conda_build.config
-# import conda_manifest.config
 
 import logging
 from conda.resolve import stdoutlog, dotlog
 
 conda_stdoutlog = stdoutlog
-# TODO: Handle the amount of standard out that conda is producing.
-
 
 from conda.console import SysStdoutWriteHandler
 
@@ -168,7 +164,7 @@ def special_case_version_matrix(meta, index):
 
     def minor_vn(version_str):
         """
-        Take an string of the form 1.8.2, into integer form 1.8
+        Take an string of the form 1.8.2, into string form 1.8
         """
         return '.'.join(version_str.split('.')[:2])
 
@@ -221,9 +217,24 @@ def special_case_version_matrix(meta, index):
                 add_case_if_soluble(case)
 
         if 'perl' in requirement_specs:
-            raise NotImplementedError('PERL version matrix not yet implemented.')
+            pl_spec = requirement_specs.pop('perl')
+            for case_base in list(cases or [()]):
+                for perl_pkg in r.get_pkgs(pl_spec):
+                    pl_vn = index[perl_pkg.fn]['version']
+                    case = case_base + (('perl', pl_vn), )
+                    add_case_if_soluble(case)
+                if case_base in cases:
+                    cases.remove(case_base)
+
         if 'r' in requirement_specs:
-            raise NotImplementedError('R version matrix not yet implemented.')
+            r_spec = requirement_specs.pop('r')
+            for case_base in list(cases or [()]):
+                for r_pkg in r.get_pkgs(r_spec):
+                    r_vn = index[r_pkg.fn]['version']
+                    case = case_base + (('r', r_vn), )
+                    add_case_if_soluble(case)
+                if case_base in cases:
+                    cases.remove(case_base)
 
     # Deal with the fact that building a Python recipe itself requires a special case
     # version. This comes down to the odd decision in

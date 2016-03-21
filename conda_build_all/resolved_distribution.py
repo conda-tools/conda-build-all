@@ -20,6 +20,8 @@ import conda_build_all.version_matrix as vn_matrix
 def setup_vn_mtx_case(case):
     orig_npy = conda_build.config.config.CONDA_NPY
     orig_py = conda_build.config.config.CONDA_PY
+    orig_r = conda_build.config.config.CONDA_R
+    orig_perl = conda_build.config.config.CONDA_PERL
 
     for pkg, version in case:
         version = int(version.replace('.', ''))
@@ -27,12 +29,18 @@ def setup_vn_mtx_case(case):
             conda_build.config.config.CONDA_PY = version
         elif pkg == 'numpy':
             conda_build.config.config.CONDA_NPY = version
+        elif pkg == 'perl':
+            conda_build.config.config.CONDA_PERL = version
+        elif pkg == 'r':
+            conda_build.config.config.CONDA_R = version
         else:
             raise NotImplementedError('Package {} not yet implemented.'
                                       ''.format(pkg))
     yield
     conda_build.config.config.CONDA_NPY = orig_npy
     conda_build.config.config.CONDA_PY = orig_py
+    conda_build.config.config.CONDA_R = orig_r
+    conda_build.config.config.CONDA_PERL = orig_perl
 
 
 class ResolvedDistribution(object):
