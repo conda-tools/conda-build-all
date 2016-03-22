@@ -131,8 +131,6 @@ class Test_special_case_version_matrix(unittest.TestCase):
                                    python_build_string,
                                    depends=['python ' + python_version])
 
-
-
     def test_numpy_xx_only(self):
         # Only a numpy x.x spec.
 
@@ -217,6 +215,61 @@ class Test_special_case_version_matrix(unittest.TestCase):
         r = special_case_version_matrix(a, self.index)
         self.assertEqual(set(r), set(expect_result),
                          msg='got: {}\nexpected: {}'.format(r, expect_result))
+
+    def test_perl_matrix(self):
+        a = DummyPackage('pkgA', ['perl'])
+        self.index.add_pkg('perl', '4.5.6')
+        self.index.add_pkg('perl', '4.5.7')
+        r = special_case_version_matrix(a, self.index)
+        self.assertEqual(r, set(((('perl', '4.5.6'),),
+                                 (('perl', '4.5.7'),),
+                                ))
+                         )
+
+    def test_perl_and_python_matrix(self):
+        a = DummyPackage('pkgA', ['perl', 'python'])
+        self.index.add_pkg('perl', '4.5.6')
+        self.index.add_pkg('perl', '4.5.7')
+        self.index.add_pkg('python', '2.7')
+        self.index.add_pkg('python', '3.5')
+
+        r = special_case_version_matrix(a, self.index)
+        expected = set(((('python', '3.5'), ('perl', '4.5.7')),
+                        (('python', '2.7'), ('perl', '4.5.7')),
+                        (('python', '2.7'), ('perl', '4.5.6')),
+                        (('python', '3.5'), ('perl', '4.5.6'))))
+        self.assertEqual(r, expected)
+
+    def test_r_matrix(self):
+        a = DummyPackage('pkgA', ['r'])
+        self.index.add_pkg('r', '4.5.6')
+        self.index.add_pkg('r', '4.5.7')
+        r = special_case_version_matrix(a, self.index)
+        self.assertEqual(r, set(((('r', '4.5.6'),),
+                                 (('r', '4.5.7'),),
+                                ))
+                         )
+
+    def test_r_and_py_and_perl_matrix(self):
+        a = DummyPackage('pkgA', ['perl', 'python', 'r'])
+        self.index.add_pkg('perl', '4.5.6')
+        self.index.add_pkg('perl', '4.5.7')
+        self.index.add_pkg('python', '2.7')
+        self.index.add_pkg('python', '3.5')
+        self.index.add_pkg('r', '1.2.3')
+        self.index.add_pkg('r', '4.5.6')
+
+        r = special_case_version_matrix(a, self.index)
+        expected = set(((('python', '2.7'), ('perl', '4.5.6'), ('r', '1.2.3')),
+                        (('python', '2.7'), ('perl', '4.5.6'), ('r', '4.5.6')),
+                        (('python', '3.5'), ('perl', '4.5.6'), ('r', '1.2.3')),
+                        (('python', '3.5'), ('perl', '4.5.7'), ('r', '1.2.3')),
+                        (('python', '3.5'), ('perl', '4.5.7'), ('r', '4.5.6')),
+                        (('python', '2.7'), ('perl', '4.5.7'), ('r', '4.5.6')),
+                        (('python', '2.7'), ('perl', '4.5.7'), ('r', '1.2.3')),
+                        (('python', '3.5'), ('perl', '4.5.6'), ('r', '4.5.6')),
+                        ))
+        self.assertEqual(r, expected)
 
 
 class Test_parse_specification(unittest.TestCase):
