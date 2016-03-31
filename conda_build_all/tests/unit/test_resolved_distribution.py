@@ -7,7 +7,8 @@ import textwrap
 import conda_build.config
 from conda_build.metadata import MetaData
 
-from conda_build_all.resolved_distribution import ResolvedDistribution
+from conda_build_all.resolved_distribution import (ResolvedDistribution,
+                                                   setup_vn_mtx_case)
 from conda_build_all.tests.unit import RecipeCreatingUnit
 from conda_build_all.tests.unit.dummy_index import DummyIndex, DummyPackage
 
@@ -101,6 +102,20 @@ class Test_BakedDistribution_resolve_all(RecipeCreatingUnit):
                                        extra_conditions=['python 2.6.*|>=3'])
         ids = [dist.build_id() for dist in resolved]
         self.assertEqual(ids, ['py26_0', 'py35_0'])
+
+
+class Test_setup_vn_mtx_case(unittest.TestCase):
+    def test_perl_case(self):
+        with setup_vn_mtx_case([('perl', '9.10.11.12'), ('numpy', '1.23'),
+                                ('python', '2.7'), ('r', '4.5.6')]):
+            self.assertEqual(conda_build.config.config.CONDA_PERL,
+                             '9.10.11.12')
+            self.assertEqual(conda_build.config.config.CONDA_NPY,
+                             123)
+            self.assertEqual(conda_build.config.config.CONDA_PY,
+                             27)
+            self.assertEqual(conda_build.config.config.CONDA_R,
+                             '4.5.6')
 
 
 if __name__ == '__main__':
