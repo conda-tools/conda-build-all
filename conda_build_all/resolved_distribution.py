@@ -24,10 +24,11 @@ def setup_vn_mtx_case(case):
     orig_perl = conda_build.config.config.CONDA_PERL
 
     for pkg, version in case:
-        version = int(version.replace('.', ''))
         if pkg == 'python':
+            version = int(version.replace('.', ''))
             conda_build.config.config.CONDA_PY = version
         elif pkg == 'numpy':
+            version = int(version.replace('.', ''))
             conda_build.config.config.CONDA_NPY = version
         elif pkg == 'perl':
             conda_build.config.config.CONDA_PERL = version
