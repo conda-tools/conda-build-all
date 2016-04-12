@@ -90,7 +90,13 @@ class Test_sort_dependency_order(RecipeCreatingUnit):
                 name: c
             """)
 
-    def test_b_a_selector(self):
+    def test_order_dependent_selector(self):
+        # If we listen to the selectors, we would get a different build order.
+        # As a result of https://github.com/SciTools/conda-build-all/issues/30
+        # we know that we either have to resolve all dependencies up-front,
+        # or simply ignore all selectors when dealing with sort order (but
+        # emphatically not when building!).
+
         metas = list_metas(self.recipes_root_dir)
         from conda_build_all.builder import sort_dependency_order
         names = [m.name() for m in sort_dependency_order(metas)]

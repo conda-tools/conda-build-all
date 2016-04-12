@@ -8,8 +8,10 @@ defined), and the next package will be processed.
 """
 from __future__ import print_function
 
+from copy import deepcopy
 import glob
 import logging
+import mock
 import os
 import subprocess
 from argparse import Namespace
@@ -81,6 +83,21 @@ def sort_dependency_order(metas):
     meta_named_deps = {}
     buildable = [meta.name() for meta in metas]
     for meta in metas:
+        meta = deepcopy(meta)
+
+        # In order to deal with selectors impacting sort order, we completely
+        # ignore them for the sake of ordering. This decision was taken in the
+        # light of https://github.com/SciTools/conda-build-all/issues/30 as a
+        # pragmatic performance choice.
+        def select_lines(data, *args, **kwargs):
+            # Just return the data without removing any of the lines. This
+            # is only a suitable solution when selectors are also comments.
+            return data
+        with mock.patch('conda_build.metadata.select_lines', new=select_lines):
+            meta.parse_again()
+
+        # Now that we have re-parsed the metadata with selectors unconditionally
+        # included, we can get the run and build dependencies and do a toposort.
         all_deps = ((meta.get_value('requirements/run', []) or []) +
                     (meta.get_value('requirements/build', []) or []))
         # Remove version information from the name.
