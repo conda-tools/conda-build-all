@@ -66,6 +66,42 @@ class Test_list_metas(RecipeCreatingUnit):
         names = [meta.name() for meta in metas]
         self.assertEqual(sorted(names), ['m1', 'm3'])
 
+
+class Test_sort_dependency_order(RecipeCreatingUnit):
+    def setUp(self):
+        super(Test_sort_dependency_order, self).setUp()
+        a = self.write_meta('a', """
+            package:
+                name: a
+            requirements:
+                build:
+                    - c
+            """)
+
+        b = self.write_meta('b', """
+            package:
+                name: b
+            requirements:
+                run:
+                    - a  # [False]
+            """)
+        c = self.write_meta('c', """
+            package:
+                name: c
+            """)
+
+    def test_order_dependent_selector(self):
+        # If we listen to the selectors, we would get a different build order.
+        # As a result of https://github.com/SciTools/conda-build-all/issues/30
+        # we know that we either have to resolve all dependencies up-front,
+        # or simply ignore all selectors when dealing with sort order (but
+        # emphatically not when building!).
+
+        metas = list_metas(self.recipes_root_dir)
+        from conda_build_all.builder import sort_dependency_order
+        names = [m.name() for m in sort_dependency_order(metas)]
+        self.assertEqual(names, ['c', 'a', 'b'])
+
  
 if __name__ == '__main__':
     unittest.main()
