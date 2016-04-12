@@ -21,6 +21,7 @@ requirements:
         - conda
         - conda-build
         - anaconda-client
+        - mock  # [py<33]
 
 test:
   imports:
@@ -28,9 +29,8 @@ test:
   commands:
     - conda buildall --help
     - conda-buildall --version
-# Note, when https://github.com/conda/conda/pull/1840 is merged, this is the prefered option.
-#    - conda build-all --help
+    - conda build-all --help
 
 about:
   license: BSD-3
-  home: https://github.com/pelson/conda-build-all
+  home: https://github.com/scitools/conda-build-all
