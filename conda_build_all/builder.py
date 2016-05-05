@@ -59,7 +59,7 @@ def list_metas(directory, max_depth=0):
     directory
         Where to start looking for metas using os.walk.
     max_depth : int
-        How deep to recurse when looking for recipes. 
+        How deep to recurse when looking for recipes.
         A value ``<=0`` will recurse indefinitely. A value of 1
         will look in the given directory for a meta.yaml.
         (default: 0)
@@ -72,7 +72,7 @@ def list_metas(directory, max_depth=0):
         depth = new_root[len(root):].count(os.path.sep) + 1
         if max_depth > 0 and depth >= max_depth:
             del dirs[:]
- 
+
         if 'meta.yaml' in files:
             packages.append(MetaData(new_root))
     return packages
@@ -94,7 +94,7 @@ def sort_dependency_order(metas):
             # is only a suitable solution when selectors are also comments.
             return data
         with mock.patch('conda_build.metadata.select_lines', new=select_lines):
-            meta.parse_again()
+            meta.parse_again(permit_undefined_jinja=True)
 
         # Now that we have re-parsed the metadata with selectors unconditionally
         # included, we can get the run and build dependencies and do a toposort.
@@ -217,7 +217,7 @@ class Builder(object):
         print('Resolved dependencies, will be built in the following order: \n\t{}'.format(
               '\n\t'.join(['{} (will be built: {})'.format(meta.dist(), dist_locn is None)
                            for meta, dist_locn in recipes_and_dist_locn])))
- 
+
         for meta, built_dist_location in recipes_and_dist_locn:
             was_built = built_dist_location is None
             if was_built:
@@ -240,4 +240,3 @@ class Builder(object):
         """
         for artefact_destination in self.artefact_destinations:
             artefact_destination.make_available(meta, built_dist_location, was_built)
-
