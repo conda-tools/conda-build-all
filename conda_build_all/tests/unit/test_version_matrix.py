@@ -108,13 +108,11 @@ class Test_special_case_version_matrix(unittest.TestCase):
         self.index.add_pkg('python', '2.7.2')
         self.index.add_pkg('python', '3.5.0')
         r = special_case_version_matrix(a, self.index)
-        # TODO: Enable this test.
-        return
         # No python 3 should be here.
-    #    self.assertEqual(r, set([(('python', '2.7'),
-    #                                  ),
-    #                            ])
-    #                     )
+        self.assertEqual(r, set([(('python', '2.7'),
+                                   ),
+                                ]
+                               ))
 
     def construct_numpy_index(self, python_versions, numpy_versions):
         """
