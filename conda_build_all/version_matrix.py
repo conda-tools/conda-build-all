@@ -178,15 +178,13 @@ def special_case_version_matrix(meta, index):
             return
 
         specs = ([ms.spec for ms in requirement_specs.values()] +
-                 ['{} {}.*'.format(pkg, version) for pkg, version in case])
-        cases.add(case)
-        return
-        # This code path is disabled for now as it takes a prohibitive amount of time to compute.
+                 ['{} {}*'.format(pkg, version) for pkg, version in case])
+
         try:
             # Figure out if this case is actually resolvable. We don't care how,
             # just that it could be.
-            r.solve2(specs, features=set(), guess=False, unsat_only=True)
-        except RuntimeError:
+            r.solve(specs)
+        except conda.resolve.Unsatisfiable:
             unsolvable_cases.add(case)
         else:
             cases.add(case)

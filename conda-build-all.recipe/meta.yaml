@@ -18,7 +18,7 @@ requirements:
     run:
         - python
         - setuptools
-        - conda
+        - conda >=4
         - conda-build >=1.20.2
         - anaconda-client
         - mock  # [py<33]
