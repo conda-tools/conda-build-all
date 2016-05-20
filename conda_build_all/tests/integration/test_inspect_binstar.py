@@ -7,7 +7,8 @@ from argparse import Namespace
 from conda_build_all.build import build, upload
 from conda_build_all.inspect_binstar import (distribution_exists,
                                              distribution_exists_on_channel,
-                                             add_distribution_to_channel)
+                                             add_distribution_to_channel,
+                                             copy_distribution_to_owner)
 from conda_build_all.tests.integration.test_builder import RecipeCreatingUnit
 
 
@@ -73,6 +74,18 @@ class Test(RecipeCreatingUnit):
         add_distribution_to_channel(CLIENT, OWNER, meta, channel='main')
         # Check that the distribution has been added.
         self.assertTrue(distribution_exists_on_channel(CLIENT, OWNER, meta, channel='main'))
+
+        # Add the meta for a recipe known to exist on conda-forge
+        meta2 = self.write_meta('conda_build_all', """
+                                package:
+                                    name: conda-build-all
+                                    version: 0.12.0
+                                build:
+                                    script: python setup.py install --single-version-externally-managed --record=record.txt
+
+                                """)
+        copy_distribution_to_owner(CLIENT, 'conda-forge', OWNER, meta2, channel='main')
+        self.assertTrue(distribution_exists_on_channel(CLIENT, OWNER, meta2))
 
 
 if __name__ == '__main__':

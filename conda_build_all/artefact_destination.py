@@ -116,5 +116,6 @@ class AnacondaClientChannelDest(ArtefactDestination):
         elif not just_built:
             # The distribution already existed, but not under the target owner.
             if 'http://' in built_dist_path or 'https://' in built_dist_path:
-                raise NotImplementedError('cross owner copying not yet implemented.')
-
+                source_owner = built_dist_path.rsplit('/', 3)[-3]
+                inspect_binstar.copy_distribution_to_owner(self._cli, source_owner, self.owner, meta,
+                                                           channel=self.channel)

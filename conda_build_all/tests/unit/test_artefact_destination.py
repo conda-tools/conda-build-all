@@ -92,11 +92,14 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
         ad = AnacondaClientChannelDest(mock.sentinel.token, owner, channel)
         ad._cli = client
         meta = DummyPackage('a', '2.1.0')
-        for url in ['http://foo.bar/',
-                    'https://foo.bar/wibble']:
+        source_owner = 'fake_owner'
+        # The osx-64 subdirectory at the end of the URL is not important to the test.
+        for url in ['http://foo.bar/{}/osx-64/'.format(source_owner),
+                    'https://foo.bar/wibble/{}/osx-64/'.format(source_owner)]:
             with self.dist_exists_setup(on_owner=False, on_channel=False):
-                with self.assertRaises(NotImplementedError):
+                with mock.patch('conda_build_all.inspect_binstar.copy_distribution_to_owner') as copy:
                     ad.make_available(meta, url, just_built=False)
+            copy.assert_called_once_with(ad._cli, source_owner, owner, meta, channel=channel)
 
     def test_from_spec_owner(self):
         spec = 'testing'
