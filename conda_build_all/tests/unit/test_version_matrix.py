@@ -363,7 +363,7 @@ class Test_filter_cases(CasesTestCase):
                  [self.item['py35']])
         self.assertEqual(tuple(filter_cases(cases, ['python >=3', 'python <=3.4'])), cases[1:2])
 
-    def test_multiple_filter(self):
+    def test_multiple_filter_with_numpy(self):
         cases = ([self.item['py26'], self.item['np110']],
                  [self.item['py34'], self.item['np19']],
                  [self.item['py35'], self.item['np110']])
