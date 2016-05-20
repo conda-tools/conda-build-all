@@ -75,7 +75,7 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
         # Nothing happens, we just get a message.
         self.logger.info.assert_called_once_with('Nothing to be done for a - it is already on sentinel.owner/sentinel.channel.')
 
-    def test_already_available_not_just_built(self):
+    def test_already_available_just_built(self):
         client, owner, channel = [mock.sentinel.client, mock.sentinel.owner,
                                   mock.sentinel.channel]
         ad = AnacondaClientChannelDest(mock.sentinel.token, owner, channel)
