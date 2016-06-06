@@ -95,7 +95,8 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
         source_owner = 'fake_owner'
         # The osx-64 subdirectory at the end of the URL is not important to the test.
         for url in ['http://foo.bar/{}/osx-64/'.format(source_owner),
-                    'https://foo.bar/wibble/{}/osx-64/'.format(source_owner)]:
+                    'https://foo.bar/wibble/{}/osx-64/'.format(source_owner),
+                    'https://foo.bar/wibble/{}/osx-64'.format(source_owner)]:
             with self.dist_exists_setup(on_owner=False, on_channel=False):
                 with mock.patch('conda_build_all.inspect_binstar.copy_distribution_to_owner') as copy:
                     ad.make_available(meta, url, just_built=False)

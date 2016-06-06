@@ -80,9 +80,6 @@ class Test(RecipeCreatingUnit):
                                 package:
                                     name: conda-build-all
                                     version: 0.12.0
-                                build:
-                                    script: python setup.py install --single-version-externally-managed --record=record.txt
-
                                 """)
         copy_distribution_to_owner(CLIENT, 'conda-forge', OWNER, meta2, channel='main')
         self.assertTrue(distribution_exists_on_channel(CLIENT, OWNER, meta2))

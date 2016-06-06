@@ -13,6 +13,7 @@ import os
 import shutil
 import subprocess
 from argparse import Namespace
+import posixpath as urlpath
 
 import binstar_client.utils
 import binstar_client
@@ -116,6 +117,6 @@ class AnacondaClientChannelDest(ArtefactDestination):
         elif not just_built:
             # The distribution already existed, but not under the target owner.
             if 'http://' in built_dist_path or 'https://' in built_dist_path:
-                source_owner = built_dist_path.rsplit('/', 3)[-3]
+                source_owner = urlpath.basename(urlpath.dirname(built_dist_path.rstrip('/')))
                 inspect_binstar.copy_distribution_to_owner(self._cli, source_owner, self.owner, meta,
                                                            channel=self.channel)
