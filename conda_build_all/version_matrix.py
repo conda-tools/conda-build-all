@@ -238,7 +238,7 @@ def special_case_version_matrix(meta, index):
     # version. This comes down to the odd decision in
     # https://github.com/conda/conda-build/commit/3dddeaf3cf5e85369e28c8f96e24c2dd655e36f0.
     if meta.name() == 'python' and not cases:
-        cases.add((('python', meta.version()),))
+        cases.add((('python', '.'.join(meta.version().split('.', 2)[:2])),))
 
     # Put an empty case in to allow simple iteration of the results.
     if not cases:

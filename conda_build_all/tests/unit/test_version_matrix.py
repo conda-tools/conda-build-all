@@ -29,9 +29,9 @@ class Test_special_case_version_matrix(unittest.TestCase):
         self.assertEqual(r, set([()]))
 
     def test_python_itself(self):
-        a = DummyPackage('python', version="abc")
+        a = DummyPackage('python', version="a.b.c")
         r = special_case_version_matrix(a, self.index)
-        self.assertEqual(r, set(((('python', 'abc'),),
+        self.assertEqual(r, set(((('python', 'a.b'),),
                                 ))
                          )
 
