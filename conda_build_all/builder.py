@@ -93,8 +93,10 @@ def sort_dependency_order(metas):
             # Just return the data without removing any of the lines. This
             # is only a suitable solution when selectors are also comments.
             return data
+
         with mock.patch('conda_build.metadata.select_lines', new=select_lines):
-            meta.parse_again(permit_undefined_jinja=True)
+            with mock.patch('conda_build.jinja_context.select_lines', new=select_lines):
+                meta.parse_again(permit_undefined_jinja=True)
 
         # Now that we have re-parsed the metadata with selectors unconditionally
         # included, we can get the run and build dependencies and do a toposort.
@@ -160,6 +162,10 @@ class Builder(object):
             # there is a distribution for this platform. This isn't a big deal, as channels are
             # typically split by platform. If this changes, we would need to re-consider how this
             # is implemented.
+
+            # We temporarily workaround the index containing the channel information in the key.
+            # We should deal with this properly though.
+            index = {meta['fn']: meta for meta in index.values()}
 
             for recipe_pair in recipes:
                 meta, dist_location = recipe_pair
