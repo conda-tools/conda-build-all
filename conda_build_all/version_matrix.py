@@ -14,6 +14,9 @@ conda_stdoutlog = stdoutlog
 from conda.console import SysStdoutWriteHandler
 
 
+NO_PACKAGES_EXCEPTION = tuple(getattr(conda.resolve, attr)
+                              for attr in ['Unsatisfiable', 'NoPackagesFound'])
+
 class StdoutNewline(SysStdoutWriteHandler):
     def emit(self, record):
         record.msg += '\n'
@@ -184,7 +187,7 @@ def special_case_version_matrix(meta, index):
             # Figure out if this case is actually resolvable. We don't care how,
             # just that it could be.
             r.solve(specs)
-        except conda.resolve.Unsatisfiable:
+        except NO_PACKAGES_EXCEPTION:
             unsolvable_cases.add(case)
         else:
             cases.add(case)
