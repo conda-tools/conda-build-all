@@ -97,7 +97,7 @@ class Test__find_existing_built_dists(RecipeCreatingUnit):
         channel = self.make_channel(self.metas.values())
         channel_url = 'file://' + channel
         builder = Builder('.', [channel_url], [], [], [])
-        expected_channel = '{}/{}/'.format(channel_url, self.metas['a1'].info_index()['subdir'])
+        expected_channel = '{}/{}'.format(channel_url, self.metas['a1'].info_index()['subdir'])
         existing = builder.find_existing_built_dists([self.metas['a1'], self.metas['a2']])
         dists = [(meta.dist(), locn) for meta, locn in existing]
         self.assertEqual(dists, [('a-1.0-0', expected_channel),
