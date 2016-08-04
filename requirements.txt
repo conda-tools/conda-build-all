@@ -1,4 +1,4 @@
 conda >=4
-conda-build >=1.10.2
+conda-build >=1.21.7
 anaconda-client
 mock

@@ -40,7 +40,7 @@ class RecipeCreatingUnit(unittest.TestCase):
 
 
 class Test_build(RecipeCreatingUnit):
-    def test(self):
+    def test_no_source(self):
         pkg1 = self.write_meta('pkg1', """
                     package:
                         name: pkg1
