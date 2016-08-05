@@ -10,6 +10,7 @@ from conda_build.metadata import MetaData
 import conda_build.config
 from conda.lock import Locked
 from conda_build.build import bldpkg_path
+import conda_build.source
 import binstar_client
 from binstar_client.utils.detect import detect_package_type, get_attrs
 
@@ -27,8 +28,9 @@ def build(meta, test=True):
         else:
             kwd = {'verbose': False}
         meta.check_fields()
-        if os.path.exists(conda_build.config.config.info_dir):
-            shutil.rmtree(conda_build.config.config.info_dir)
+
+        if os.path.exists(conda_build.source.WORK_DIR):
+            shutil.rmtree(conda_build.source.WORK_DIR)
         build_module.build(meta, post=None, need_source_download=True, **kwd)
         if test:
             build_module.test(meta, **kwd)
