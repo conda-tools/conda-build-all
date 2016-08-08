@@ -23,6 +23,11 @@ def setup_vn_mtx_case(case):
     orig_r = conda_build.config.config.CONDA_R
     orig_perl = conda_build.config.config.CONDA_PERL
 
+    # In order to avoid the need for the CONDA_NPY env var being defined, we
+    # set the CONDA_NPY variable to a meaningless value. This is tested at
+    # conda_build_all.tests.integration.test_builder:Test_build.test_numpy_dep
+    conda_build.config.config.CONDA_NPY = 10
+
     for pkg, version in case:
         if pkg == 'python':
             version = int(version.replace('.', ''))

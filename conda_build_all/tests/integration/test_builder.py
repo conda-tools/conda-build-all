@@ -53,6 +53,26 @@ class Test_build(RecipeCreatingUnit):
         self.assertEqual(os.path.abspath(r), r)
         self.assertEqual(os.path.basename(r), 'pkg1-1.0-0.tar.bz2')
 
+    def test_numpy_dep(self):
+        pkg1 = self.write_meta('pkg1', """
+                    package:
+                        name: pkg1
+                        version: 1.0
+                    requirements:
+                        build:
+                            - python
+                            - numpy x.x
+                        run:
+                            - python
+                            - numpy x.x
+                    """)
+        pkg1_resolved = ResolvedDistribution(pkg1, (['python', '3.5'], ['numpy', '1.11']))
+        builder = Builder(None, None, None, None, None)
+        r = builder.build(pkg1_resolved)
+        self.assertTrue(os.path.exists(r))
+        self.assertEqual(os.path.abspath(r), r)
+        self.assertEqual(os.path.basename(r), 'pkg1-1.0-np111py35_0.tar.bz2')
+
 
 class Test__find_existing_built_dists(RecipeCreatingUnit):
     def make_channel(self, all_metas):
