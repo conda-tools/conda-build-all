@@ -210,6 +210,13 @@ class Builder(object):
         return all_distros
 
     def main(self):
+        # We set the CONDA_NPY and CONDA_PY variables to meaningless values.
+        # Since we compute a build matrix anyway, these are only useful to
+        # prevent conda-build throwing a wobbly for them missing.
+        import conda_build.config
+        conda_build.config.config.CONDA_NPY = 10
+        conda_build.config.config.CONDA_PY = 10
+
         recipe_metas = self.fetch_all_metas()
         index = get_index(use_cache=True)
 
