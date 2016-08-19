@@ -20,6 +20,7 @@ from binstar_client.utils import get_binstar
 import binstar_client
 from conda.api import get_index
 import conda.config
+import conda_build.config
 from conda_build.metadata import MetaData
 from conda_build.build import bldpkg_path
 import conda.config
@@ -210,16 +211,21 @@ class Builder(object):
         return all_distros
 
     def main(self):
-        # We set the CONDA_NPY and CONDA_PY variables to meaningless values.
-        # Since we compute a build matrix anyway, these are only useful to
-        # prevent conda-build throwing a wobbly for them missing.
-        import conda_build.config
-        conda_build.config.config.CONDA_NPY = 10
-        conda_build.config.config.CONDA_PY = 10
-
-        recipe_metas = self.fetch_all_metas()
         index = get_index(use_cache=True)
 
+        # If it is not already defined with environment variables, we set the CONDA_NPY
+        # to the latest possible value. Since we compute a build matrix anyway, this is 
+        # useful to prevent conda-build bailing if the recipe depends on it (e.g.
+        # ``numpy x.x``), and to ensure that recipes that don't care which version they want
+        # at build/test time get a sensible version.
+        if conda_build.config.config.CONDA_NPY is None:
+            resolver = conda.resolve.Resolve(index)
+            npy = resolver.get_pkgs('numpy', emptyok=True)
+            if npy:
+                version = ''.join(max(npy).version.split('.')[:2])
+                conda_build.config.config.CONDA_NPY = version
+
+        recipe_metas = self.fetch_all_metas()
         print('Resolving distributions from {} recipes... '.format(len(recipe_metas)))
 
         all_distros = self.compute_build_distros(index, recipe_metas)
