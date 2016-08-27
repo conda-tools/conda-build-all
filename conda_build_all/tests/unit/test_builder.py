@@ -1,11 +1,7 @@
 import os
-import shutil
-import tempfile
 import unittest
-import textwrap
 
-import conda_build.config
-from conda_build.metadata import MetaData
+import conda_build.api
 
 from conda_build_all.builder import list_metas
 from conda_build_all.tests.integration.test_builder import RecipeCreatingUnit
@@ -96,10 +92,11 @@ class Test_sort_dependency_order(RecipeCreatingUnit):
         # we know that we either have to resolve all dependencies up-front,
         # or simply ignore all selectors when dealing with sort order (but
         # emphatically not when building!).
+        config = conda_build.api.Config()
 
         metas = list_metas(self.recipes_root_dir)
         from conda_build_all.builder import sort_dependency_order
-        names = [m.name() for m in sort_dependency_order(metas)]
+        names = [m.name() for m in sort_dependency_order(metas, config)]
         self.assertEqual(names, ['c', 'a', 'b'])
 
  

@@ -2,6 +2,7 @@ import collections
 import os
 
 from conda_build.index import write_repodata
+import conda_build.api
 import conda.config
 
 
@@ -63,7 +64,7 @@ class DummyIndex(dict):
         channel_subdir = os.path.join(dest, conda.config.subdir)
         if not os.path.exists(channel_subdir):
             os.mkdir(channel_subdir)
-        write_repodata({'packages': self, 'info': {}}, channel_subdir)
+        write_repodata({'packages': self, 'info': {}}, channel_subdir, conda_build.api.Config())
 
         return channel_subdir
 

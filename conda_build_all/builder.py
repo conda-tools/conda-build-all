@@ -13,17 +13,12 @@ import glob
 import logging
 import mock
 import os
-import subprocess
-from argparse import Namespace
 
 from binstar_client.utils import get_binstar
 import binstar_client
 from conda.api import get_index
 import conda.config
-import conda_build.config
-from conda_build.metadata import MetaData
-from conda_build.build import bldpkg_path
-import conda.config
+import conda_build.api
 
 from . import order_deps
 from . import build
@@ -34,8 +29,7 @@ from . import resolved_distribution
 
 def package_built_name(package, root_dir):
     package_dir = os.path.join(root_dir, package)
-    meta = MetaData(package_dir)
-    return bldpkg_path(meta)
+    return conda_build.api.get_output_file_path(package_dir)
 
 
 def distribution_exists(binstar_cli, owner, metadata):
@@ -75,11 +69,11 @@ def list_metas(directory, max_depth=0):
             del dirs[:]
 
         if 'meta.yaml' in files:
-            packages.append(MetaData(new_root))
+            packages.append(conda_build.api.render(new_root)[0])
     return packages
 
 
-def sort_dependency_order(metas):
+def sort_dependency_order(metas, config):
     """Sort the metas into the order that they must be built."""
     meta_named_deps = {}
     buildable = [meta.name() for meta in metas]
@@ -97,7 +91,7 @@ def sort_dependency_order(metas):
 
         with mock.patch('conda_build.metadata.select_lines', new=select_lines):
             with mock.patch('conda_build.jinja_context.select_lines', new=select_lines):
-                meta.parse_again(permit_undefined_jinja=True)
+                meta.parse_again(config, permit_undefined_jinja=True)
 
         # Now that we have re-parsed the metadata with selectors unconditionally
         # included, we can get the run and build dependencies and do a toposort.
@@ -143,14 +137,14 @@ class Builder(object):
         self.matrix_conditions = matrix_conditions
         self.matrix_max_n_major_minor_versions = matrix_max_n_major_minor_versions
 
-    def fetch_all_metas(self):
+    def fetch_all_metas(self, config):
         """
         Return the conda recipe metas, in the order they should be built.
 
         """
         conda_recipes_directory = os.path.abspath(os.path.expanduser(self.conda_recipes_directory))
         recipe_metas = list_metas(conda_recipes_directory)
-        recipe_metas = sort_dependency_order(recipe_metas)
+        recipe_metas = sort_dependency_order(recipe_metas, config)
         return recipe_metas
 
     def find_existing_built_dists(self, recipe_metas):
@@ -182,12 +176,13 @@ class Builder(object):
                         recipe_pair[1] = directory
         return recipes
 
-    def build(self, meta):
+    def build(self, meta, config):
         print('Building ', meta.dist())
-        with meta.vn_context():
-            return bldpkg_path(build.build(meta.meta))
+        config = meta.vn_context(config=config)
+        conda_build.api.build(meta.meta, config=config)
+        return conda_build.api.get_output_file_path(meta.meta, config)
 
-    def compute_build_distros(self, index, recipes):
+    def compute_build_distros(self, index, recipes, config):
         """
         Given the recipes which are to be built, return a list of BakedDistribution instances
         for all distributions that should be built.
@@ -212,23 +207,24 @@ class Builder(object):
 
     def main(self):
         index = get_index(use_cache=True)
+        build_config = conda_build.api.Config()
 
         # If it is not already defined with environment variables, we set the CONDA_NPY
         # to the latest possible value. Since we compute a build matrix anyway, this is 
         # useful to prevent conda-build bailing if the recipe depends on it (e.g.
         # ``numpy x.x``), and to ensure that recipes that don't care which version they want
         # at build/test time get a sensible version.
-        if conda_build.config.config.CONDA_NPY is None:
+        if build_config.CONDA_NPY is None:
             resolver = conda.resolve.Resolve(index)
             npy = resolver.get_pkgs('numpy', emptyok=True)
             if npy:
                 version = ''.join(max(npy).version.split('.')[:2])
-                conda_build.config.config.CONDA_NPY = version
+                build_config.CONDA_NPY = version
 
-        recipe_metas = self.fetch_all_metas()
+        recipe_metas = self.fetch_all_metas(build_config)
         print('Resolving distributions from {} recipes... '.format(len(recipe_metas)))
 
-        all_distros = self.compute_build_distros(index, recipe_metas)
+        all_distros = self.compute_build_distros(index, recipe_metas, build_config)
         print('Computed that there are {} distributions from the {} '
               'recipes:'.format(len(all_distros), len(recipe_metas)))
         recipes_and_dist_locn = self.find_existing_built_dists(all_distros)
@@ -240,7 +236,7 @@ class Builder(object):
         for meta, built_dist_location in recipes_and_dist_locn:
             was_built = built_dist_location is None
             if was_built:
-                built_dist_location = self.build(meta)
+                built_dist_location = self.build(meta, build_config)
             self.post_build(meta, built_dist_location, was_built)
 
     def post_build(self, meta, built_dist_location, was_built):

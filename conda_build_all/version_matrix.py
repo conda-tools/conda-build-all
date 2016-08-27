@@ -1,18 +1,16 @@
-import os
 from contextlib import contextmanager
 from collections import defaultdict
+import logging
 
 import conda.resolve
 from conda.resolve import MatchSpec
-import conda_build.config
-
-import logging
-from conda.resolve import stdoutlog, dotlog
-
-conda_stdoutlog = stdoutlog
-
+from conda.resolve import stdoutlog
 from conda.console import SysStdoutWriteHandler
 
+import conda_build.api
+
+
+conda_stdoutlog = stdoutlog
 
 NO_PACKAGES_EXCEPTION = tuple(getattr(conda.resolve, attr)
                               for attr in ['Unsatisfiable', 'NoPackagesFound'])
@@ -68,8 +66,8 @@ def conda_special_versions(meta, index, version_matrix=None):
         version_matrix = special_case_version_matrix(meta, index)
 
     for case in version_matrix:
-        with setup_vn_mtx_case(case):
-            yield case
+        config = setup_vn_mtx_case(case)
+        yield config
 
 
 def parse_specifications(requirements):
@@ -337,3 +335,22 @@ def keep_top_n_minor_versions(cases, n=2):
         if keeper:
             yield case
 
+
+def setup_vn_mtx_case(case, config=None):
+    if not config:
+        config = conda_build.api.Config()
+    for pkg, version in case:
+        if pkg == 'python':
+            version = int(version.replace('.', ''))
+            config.CONDA_PY = version
+        elif pkg == 'numpy':
+            version = int(version.replace('.', ''))
+            config.CONDA_NPY = version
+        elif pkg == 'perl':
+            config.CONDA_PERL = version
+        elif pkg == 'r':
+            config.CONDA_R = version
+        else:
+            raise NotImplementedError('Package {} not yet implemented.'
+                                      ''.format(pkg))
+    return config
