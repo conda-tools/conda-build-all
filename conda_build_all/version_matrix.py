@@ -7,7 +7,10 @@ from conda.resolve import MatchSpec
 from conda.resolve import stdoutlog
 from conda.console import SysStdoutWriteHandler
 
-import conda_build.api
+try:
+    import conda_build.api
+except ImportError:
+    import conda_build.config
 
 
 conda_stdoutlog = stdoutlog
@@ -335,22 +338,48 @@ def keep_top_n_minor_versions(cases, n=2):
         if keeper:
             yield case
 
+if hasattr(conda_build, 'api'):
+    def setup_vn_mtx_case(case, config):
+        for pkg, version in case:
+            if pkg == 'python':
+                version = int(version.replace('.', ''))
+                config.CONDA_PY = version
+            elif pkg == 'numpy':
+                version = int(version.replace('.', ''))
+                config.CONDA_NPY = version
+            elif pkg == 'perl':
+                config.CONDA_PERL = version
+            elif pkg == 'r':
+                config.CONDA_R = version
+            else:
+                raise NotImplementedError('Package {} not yet implemented.'
+                                          ''.format(pkg))
+        return config
 
-def setup_vn_mtx_case(case, config=None):
-    if not config:
-        config = conda_build.api.Config()
-    for pkg, version in case:
-        if pkg == 'python':
-            version = int(version.replace('.', ''))
-            config.CONDA_PY = version
-        elif pkg == 'numpy':
-            version = int(version.replace('.', ''))
-            config.CONDA_NPY = version
-        elif pkg == 'perl':
-            config.CONDA_PERL = version
-        elif pkg == 'r':
-            config.CONDA_R = version
-        else:
-            raise NotImplementedError('Package {} not yet implemented.'
-                                      ''.format(pkg))
-    return config
+else:
+    @contextmanager
+    def setup_vn_mtx_case(case, config=None):
+        config = conda_build.config.config
+        orig_npy = conda_build.config.config.CONDA_NPY
+        orig_py = conda_build.config.config.CONDA_PY
+        orig_r = conda_build.config.config.CONDA_R
+        orig_perl = conda_build.config.config.CONDA_PERL
+        for pkg, version in case:
+            if pkg == 'python':
+                version = int(version.replace('.', ''))
+                config.CONDA_PY = version
+            elif pkg == 'numpy':
+                version = int(version.replace('.', ''))
+                config.CONDA_NPY = version
+            elif pkg == 'perl':
+                config.CONDA_PERL = version
+            elif pkg == 'r':
+                config.CONDA_R = version
+            else:
+                raise NotImplementedError('Package {} not yet implemented.'
+                                          ''.format(pkg))
+        yield
+        conda_build.config.config.CONDA_NPY = orig_npy
+        conda_build.config.config.CONDA_PY = orig_py
+        conda_build.config.config.CONDA_R = orig_r
+        conda_build.config.config.CONDA_PERL = orig_perl

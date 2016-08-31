@@ -40,9 +40,13 @@ class ResolvedDistribution(object):
         return setup_vn_mtx_case(self.special_versions, config)
 
     def __getattr__(self, name):
-        config = setup_vn_mtx_case(self.special_versions,
-                                   config=self.meta.config)
-        self.meta.parse_again(config)
+        if hasattr(self.meta, 'config'):
+            config = setup_vn_mtx_case(self.special_versions,
+                                       config=self.meta.config)
+            self.meta.parse_again(config)
+        else:
+            with setup_vn_mtx_case(self.special_versions):
+                self.meta.parse_again()
         result = getattr(self.meta, name)
 
         # Wrap any callable such that it is called within the appropriate
@@ -53,10 +57,15 @@ class ResolvedDistribution(object):
             import functools
             @functools.wraps(result)
             def with_vn_mtx_setup(*args, **kwargs):
-                config = setup_vn_mtx_case(self.special_versions,
-                                           config=self.config)
-                self.meta.parse_again(config=config)
-                return orig_result(*args, **kwargs)
+                if hasattr(self.meta, 'config'):
+                    config = setup_vn_mtx_case(self.special_versions,
+                                               config=self.meta.config)
+                    self.meta.parse_again(config=config)
+                    return orig_result(*args, **kwargs)
+                else:
+                    with setup_vn_mtx_case(self.special_versions):
+                        self.meta.parse_again()
+                        return orig_result(*args, **kwargs)
             result = with_vn_mtx_setup
         return result
 

@@ -20,4 +20,4 @@ class RecipeCreatingUnit(unittest.TestCase):
     def write_meta(self, spec):
         with open(os.path.join(self.recipe_dir, 'meta.yaml'), 'w') as fh:
             fh.write(textwrap.dedent(spec))
-        return MetaData(os.path.join(self.recipe_dir, 'meta.yaml'))
+        return MetaData(os.path.join(self.recipe_dir))

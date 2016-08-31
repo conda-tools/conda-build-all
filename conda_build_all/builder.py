@@ -18,7 +18,14 @@ from binstar_client.utils import get_binstar
 import binstar_client
 from conda.api import get_index
 import conda.config
-import conda_build.api
+try:
+    import conda_build.api
+except ImportError:
+    import conda_build.config
+    import conda_build
+    from conda_build.metadata import MetaData
+    import conda_build.render
+    from conda_build.build import bldpkg_path
 
 from . import order_deps
 from . import build
@@ -69,7 +76,11 @@ def list_metas(directory, max_depth=0):
             del dirs[:]
 
         if 'meta.yaml' in files:
-            packages.append(conda_build.api.render(new_root)[0])
+            if hasattr(conda_build, 'api'):
+                packages.append(conda_build.api.render(new_root)[0])
+            else:
+                packages.append(MetaData(new_root))
+
     return packages
 
 
@@ -91,7 +102,10 @@ def sort_dependency_order(metas, config):
 
         with mock.patch('conda_build.metadata.select_lines', new=select_lines):
             with mock.patch('conda_build.jinja_context.select_lines', new=select_lines):
-                meta.parse_again(config, permit_undefined_jinja=True)
+                try:
+                    meta.parse_again(config, permit_undefined_jinja=True)
+                except TypeError:
+                    meta.parse_again(permit_undefined_jinja=True)
 
         # Now that we have re-parsed the metadata with selectors unconditionally
         # included, we can get the run and build dependencies and do a toposort.
@@ -179,8 +193,12 @@ class Builder(object):
     def build(self, meta, config):
         print('Building ', meta.dist())
         config = meta.vn_context(config=config)
-        conda_build.api.build(meta.meta, config=config)
-        return conda_build.api.get_output_file_path(meta.meta, config)
+        try:
+            conda_build.api.build(meta.meta, config=config)
+            return conda_build.api.get_output_file_path(meta.meta, config)
+        except AttributeError:
+            with meta.vn_context():
+                return bldpkg_path(build.build(meta.meta))
 
     def compute_build_distros(self, index, recipes, config):
         """

@@ -1,7 +1,10 @@
 import os
 import unittest
 
-import conda_build.api
+try:
+    import conda_build.api
+except ImportError:
+    import conda_build.config
 
 from conda_build_all.builder import list_metas
 from conda_build_all.tests.integration.test_builder import RecipeCreatingUnit
@@ -92,7 +95,10 @@ class Test_sort_dependency_order(RecipeCreatingUnit):
         # we know that we either have to resolve all dependencies up-front,
         # or simply ignore all selectors when dealing with sort order (but
         # emphatically not when building!).
-        config = conda_build.api.Config()
+        if hasattr(conda_build, 'api'):
+            config = conda_build.api.Config()
+        else:
+            config = conda_build.config.config
 
         metas = list_metas(self.recipes_root_dir)
         from conda_build_all.builder import sort_dependency_order
