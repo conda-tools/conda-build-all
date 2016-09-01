@@ -2,6 +2,12 @@ import collections
 import os
 
 from conda_build.index import write_repodata
+try:
+    import conda_build.api
+    extra_config = False
+except ImportError:
+    import conda_build
+    extra_config = True
 import conda.config
 
 
@@ -63,7 +69,10 @@ class DummyIndex(dict):
         channel_subdir = os.path.join(dest, conda.config.subdir)
         if not os.path.exists(channel_subdir):
             os.mkdir(channel_subdir)
-        write_repodata({'packages': self, 'info': {}}, channel_subdir)
+        if hasattr(conda_build, 'api'):
+            write_repodata({'packages': self, 'info': {}}, channel_subdir, conda_build.api.Config())
+        else:
+            write_repodata({'packages': self, 'info': {}}, channel_subdir)
 
         return channel_subdir
 

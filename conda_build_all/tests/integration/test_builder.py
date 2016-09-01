@@ -5,6 +5,11 @@ import tempfile
 import textwrap
 import unittest
 
+try:
+    import conda_build.api
+except ImportError:
+    import conda_build.config
+
 from conda_build.metadata import MetaData
 
 from conda_build_all.resolved_distribution import ResolvedDistribution
@@ -34,9 +39,10 @@ class RecipeCreatingUnit(unittest.TestCase):
         recipe_dir = os.path.join(self.recipes_root_dir, recipe_dir_name)
         if not os.path.exists(recipe_dir):
             os.makedirs(recipe_dir)
-        with open(os.path.join(recipe_dir, 'meta.yaml'), 'w') as fh:
+        recipe_file = os.path.join(recipe_dir, 'meta.yaml')
+        with open(recipe_file, 'w') as fh:
             fh.write(textwrap.dedent(spec))
-        return MetaData(recipe_dir)
+        return MetaData(os.path.dirname(recipe_file))
 
 
 class Test_build(RecipeCreatingUnit):
@@ -48,7 +54,10 @@ class Test_build(RecipeCreatingUnit):
                     """)
         pkg1_resolved = ResolvedDistribution(pkg1, (()))
         builder = Builder(None, None, None, None, None)
-        r = builder.build(pkg1_resolved)
+        if hasattr(conda_build, 'api'):
+            r = builder.build(pkg1_resolved, conda_build.api.Config())
+        else:
+            r = builder.build(pkg1_resolved, conda_build.config.config)
         self.assertTrue(os.path.exists(r))
         self.assertEqual(os.path.abspath(r), r)
         self.assertEqual(os.path.basename(r), 'pkg1-1.0-0.tar.bz2')
@@ -68,7 +77,10 @@ class Test_build(RecipeCreatingUnit):
                     """)
         pkg1_resolved = ResolvedDistribution(pkg1, (['python', '3.5'], ['numpy', '1.11']))
         builder = Builder(None, None, None, None, None)
-        r = builder.build(pkg1_resolved)
+        if hasattr(conda_build, 'api'):
+            r = builder.build(pkg1_resolved, conda_build.api.Config())
+        else:
+            r = builder.build(pkg1_resolved, conda_build.config.config)
         self.assertTrue(os.path.exists(r))
         self.assertEqual(os.path.abspath(r), r)
         self.assertEqual(os.path.basename(r), 'pkg1-1.0-np111py35_0.tar.bz2')
@@ -81,7 +93,7 @@ class Test__find_existing_built_dists(RecipeCreatingUnit):
         channel_root = tempfile.mkdtemp(prefix='temporary_channel_')
         # Line the directory up for removal when we're done with it.
         self.directories_to_remove.append(channel_root)
-        
+
         self.index.write_to_channel(channel_root)
         return channel_root
 
@@ -192,7 +204,11 @@ class Test_compute_build_distros(RecipeCreatingUnit):
                     """)]
         builder = Builder(None, None, None, None, None)
         index = {}
-        distributions = builder.compute_build_distros(index, metas)
+        if hasattr(conda_build, 'api'):
+            config = conda_build.api.Config()
+        else:
+            config = conda_build.config.config
+        distributions = builder.compute_build_distros(index, metas, config)
         expected = ['python-2.7.0-0', 'python-3.3.0-0', 'python-3.4.24-0',
                     'python-3.5.2-1',
                     'numpy-1.10-py27_0', 'numpy-1.10-py34_0', 'numpy-1.10-py35_0',
