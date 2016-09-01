@@ -124,11 +124,6 @@ def special_case_version_matrix(meta, index):
         ... setup the case ...
         ... build ...
 
-    .. note::
-
-        This algorithm does not deal with PERL and R versions at this time, and may be
-        extended in the future to compute other special case dimensions (e.g. features).
-
     """
     r = conda.resolve.Resolve(index)
 
