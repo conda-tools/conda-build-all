@@ -53,7 +53,7 @@ def distribution_exists(binstar_cli, owner, metadata):
     return exists
 
 
-def list_metas(directory, max_depth=0):
+def list_metas(directory, max_depth=0, config=None):
     """
     Get the build metadata of all recipes in a directory.
 
@@ -80,7 +80,7 @@ def list_metas(directory, max_depth=0):
 
         if 'meta.yaml' in files:
             if hasattr(conda_build, 'api'):
-                packages.append(conda_build.api.render(new_root)[0])
+                packages.append(conda_build.api.render(new_root, config=config)[0])
             else:
                 packages.append(MetaData(new_root))
 
@@ -160,8 +160,8 @@ class Builder(object):
 
         """
         conda_recipes_directory = os.path.abspath(os.path.expanduser(self.conda_recipes_directory))
-        recipe_metas = list_metas(conda_recipes_directory)
-        recipe_metas = sort_dependency_order(recipe_metas, config)
+        recipe_metas = list_metas(conda_recipes_directory, config=config)
+        recipe_metas = sort_dependency_order(recipe_metas, config=config)
         return recipe_metas
 
     def find_existing_built_dists(self, recipe_metas):
@@ -228,7 +228,10 @@ class Builder(object):
 
     def main(self):
         index = get_index(use_cache=True)
-        build_config = conda_build.api.Config()
+        if hasattr(conda_build, 'api'):
+            build_config = conda_build.api.Config()
+        else:
+            build_config = conda_build.config.config
 
         # If it is not already defined with environment variables, we set the CONDA_NPY
         # to the latest possible value. Since we compute a build matrix anyway, this is 

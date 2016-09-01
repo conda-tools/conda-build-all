@@ -57,7 +57,10 @@ def main():
 
     args = parser.parse_args()
 
-    build_config = conda_build.api.Config()
+    if hasattr(conda_build, 'api'):
+        build_config = conda_build.api.Config()
+    else:
+        build_config = conda_build.config.config
 
     matrix_conditions = args.matrix_conditions
     max_n_versions = (args.matrix_max_n_major_versions,
