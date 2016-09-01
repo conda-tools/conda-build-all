@@ -11,7 +11,10 @@ from __future__ import print_function
 from copy import deepcopy
 import glob
 import logging
-import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 import os
 
 from binstar_client.utils import get_binstar

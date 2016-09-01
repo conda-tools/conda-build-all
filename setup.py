@@ -16,9 +16,6 @@ setup(
       entry_points={
           'console_scripts': [
               'conda-build-all = conda_build_all.cli:main',
-              # This is needed as conda can't deal with dashes in subcommands yet
-              # (see https://github.com/conda/conda/pull/1840).
-              'conda-buildall = conda_build_all.cli:main',
           ]
       },
      )

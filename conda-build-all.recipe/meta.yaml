@@ -27,9 +27,8 @@ test:
   imports:
     - conda_build_all
   commands:
-    - conda buildall --help
-    - conda-buildall --version
     - conda build-all --help
+    - conda-build-all --version
 
 about:
   license: BSD-3

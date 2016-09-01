@@ -57,14 +57,16 @@ def main():
 
     args = parser.parse_args()
 
+    build_config = conda_build.api.Config()
+
     matrix_conditions = args.matrix_conditions
     max_n_versions = (args.matrix_max_n_major_versions,
                       args.matrix_max_n_minor_versions)
 
     inspection_directories = args.inspect_directories or []
     if (not args.no_inspect_conda_bld_directory and
-            os.path.isdir(conda_build.config.config.bldpkgs_dir)):
-        inspection_directories.append(conda_build.config.config.bldpkgs_dir)
+            os.path.isdir(build_config.bldpkgs_dir)):
+        inspection_directories.append(build_config.bldpkgs_dir)
 
     artefact_destinations = []
     for channel in args.upload_channels:
