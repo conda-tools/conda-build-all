@@ -1,7 +1,10 @@
 from argparse import Namespace
 from contextlib import contextmanager
 import logging
-import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
 import os
 import shutil
 import sys
