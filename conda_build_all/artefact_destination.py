@@ -33,7 +33,7 @@ class ArtefactDestination(object):
     def __init__(self):
         pass
 
-    def make_available(self, meta, built_dist_path, just_built):
+    def make_available(self, meta, config, built_dist_path, just_built):
         """
         Put the built distribution on this destination.
 
@@ -41,6 +41,8 @@ class ArtefactDestination(object):
         ----------
         meta : MetaData
             The metadata of the thing to make available.
+        config
+            The conda-build configuration for the build.
         built_dist_path
             The location of the built distribution for this artefact.
         just_built : bool
@@ -58,7 +60,7 @@ class DirectoryDestination(ArtefactDestination):
         if not os.path.isdir(self.directory):
             raise IOError("The destination provided is not a directory.")
 
-    def make_available(self, meta, built_dist_path, just_built):
+    def make_available(self, meta, config, built_dist_path, just_built):
         if just_built:
             print(meta, built_dist_path, just_built)
             shutil.copy(built_dist_path, self.directory)
@@ -87,7 +89,7 @@ class AnacondaClientChannelDest(ArtefactDestination):
             owner, channel = spec, 'main'
         return cls(token, owner, channel)
 
-    def make_available(self, meta, built_dist_path, just_built):
+    def make_available(self, meta, config, built_dist_path, just_built):
         if self._cli is None:
             self._cli = binstar_client.utils.get_binstar(Namespace(token=self.token, site=None))
 
@@ -112,7 +114,7 @@ class AnacondaClientChannelDest(ArtefactDestination):
         elif just_built:
             # Upload the distribution
             log.info('Uploading {} to the {} channel.'.format(meta.name(), self.channel))
-            build.upload(self._cli, meta, self.owner, channels=[self.channel])
+            build.upload(self._cli, meta, config, self.owner, channels=[self.channel])
 
         elif not just_built:
             # The distribution already existed, but not under the target owner.

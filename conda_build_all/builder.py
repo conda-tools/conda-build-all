@@ -263,7 +263,7 @@ class Builder(object):
                 built_dist_location = self.build(meta, build_config)
             self.post_build(meta, built_dist_location, was_built)
 
-    def post_build(self, meta, built_dist_location, was_built):
+    def post_build(self, meta, config, built_dist_location, was_built):
         """
         The post build phase occurs whether or not a build has actually taken place.
         It is the point at which a distribution is transfered to the desired artefact
@@ -278,4 +278,4 @@ class Builder(object):
 
         """
         for artefact_destination in self.artefact_destinations:
-            artefact_destination.make_available(meta, built_dist_location, was_built)
+            artefact_destination.make_available(meta, config, built_dist_location, was_built)

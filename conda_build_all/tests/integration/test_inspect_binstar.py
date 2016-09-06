@@ -3,6 +3,10 @@ import unittest
 
 from binstar_client.utils import get_binstar
 from argparse import Namespace
+try:
+    import conda_build.api
+except ImportError:
+    import conda_build.config
 
 from conda_build_all.build import build, upload
 from conda_build_all.inspect_binstar import (distribution_exists,
@@ -57,12 +61,16 @@ class Test(RecipeCreatingUnit):
                         script: echo "v0.1.0.dev1" > __conda_version__.txt
                     """)
         meta = build(meta)
+        if hasattr(conda_build, 'api'):
+            build_config = conda_build.api.Config()
+        else:
+            build_config = conda_build.config.config
 
         # Check distribution exists returns false when there is no distribution.
         self.assertFalse(distribution_exists(CLIENT, OWNER, meta))
 
         # upload the distribution 
-        upload(CLIENT, meta, OWNER, channels=['testing'])
+        upload(CLIENT, meta, build_config, OWNER, channels=['testing'])
 
         # Check the distribution exists. Notice there is no channel being supplied here.
         self.assertTrue(distribution_exists(CLIENT, OWNER, meta))
