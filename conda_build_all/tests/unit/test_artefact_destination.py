@@ -69,7 +69,8 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
             with mock.patch('conda_build_all.build.upload') as upload:
                 ad.make_available(meta, config, mock.sentinel.dist_path,
                                   just_built=True)
-        upload.assert_called_once_with(client, meta, owner, channels=[channel])
+        upload.assert_called_once_with(client, meta, config, owner,
+                                       channels=[channel])
         self.logger.info.assert_called_once_with('Uploading a to the sentinel.channel channel.')
 
     def test_already_available_not_just_built(self):
