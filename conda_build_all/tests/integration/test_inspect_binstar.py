@@ -70,7 +70,7 @@ class Test(RecipeCreatingUnit):
         self.assertFalse(distribution_exists(CLIENT, OWNER, meta))
 
         # upload the distribution 
-        upload(CLIENT, meta, build_config, OWNER, channels=['testing'])
+        upload(CLIENT, meta, OWNER, channels=['testing'], config=build_config)
 
         # Check the distribution exists. Notice there is no channel being supplied here.
         self.assertTrue(distribution_exists(CLIENT, OWNER, meta))

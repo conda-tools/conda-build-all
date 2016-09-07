@@ -37,7 +37,7 @@ def build(meta, test=True):
         return meta
 
 
-def upload(cli, meta, config, owner, channels=['main']):
+def upload(cli, meta, owner, channels=['main'], config=None):
     """Upload a distribution, given the build metadata."""
     fname = bldpkg_path(meta, config)
     package_type = detect_package_type(fname)

@@ -53,8 +53,8 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
         config = self._get_config()
         with self.dist_exists_setup(on_owner=True, on_channel=False):
             with mock.patch('conda_build_all.inspect_binstar.add_distribution_to_channel') as add_to_channel:
-                ad.make_available(meta, config, mock.sentinel.dist_path,
-                                  just_built=False)
+                ad.make_available(meta, mock.sentinel.dist_path,
+                                  just_built=False, config=config)
         add_to_channel.assert_called_once_with(client, owner, meta, channel=channel)
         self.logger.info.assert_called_once_with('Adding existing a-0.0-0 to the sentinel.owner/sentinel.channel channel.')
 
@@ -67,10 +67,10 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
         config = self._get_config()
         with self.dist_exists_setup(on_owner=False, on_channel=False):
             with mock.patch('conda_build_all.build.upload') as upload:
-                ad.make_available(meta, config, mock.sentinel.dist_path,
-                                  just_built=True)
-        upload.assert_called_once_with(client, meta, config, owner,
-                                       channels=[channel])
+                ad.make_available(meta, mock.sentinel.dist_path,
+                                  just_built=True, config=config)
+        upload.assert_called_once_with(client, meta, owner,
+                                       channels=[channel], config=config)
         self.logger.info.assert_called_once_with('Uploading a to the sentinel.channel channel.')
 
     def test_already_available_not_just_built(self):
@@ -83,8 +83,8 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
         config = self._get_config()
         with self.dist_exists_setup(on_owner=True, on_channel=True):
             with mock.patch('binstar_client.utils.get_binstar') as get_binstar:
-                ad.make_available(meta, config, mock.sentinel.dist_path,
-                                  just_built=False)
+                ad.make_available(meta, mock.sentinel.dist_path,
+                                  just_built=False, config=config)
         get_binstar.assert_called_once_with(Namespace(site=None, token=mock.sentinel.token))
         # Nothing happens, we just get a message.
         self.logger.info.assert_called_once_with('Nothing to be done for a - it is already on sentinel.owner/sentinel.channel.')
@@ -97,8 +97,8 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
         meta = DummyPackage('a', '2.1.0')
         config = self._get_config()
         with self.dist_exists_setup(on_owner=True, on_channel=True):
-            ad.make_available(meta, config, mock.sentinel.dist_path,
-                              just_built=True)
+            ad.make_available(meta, mock.sentinel.dist_path,
+                              just_built=True, config=config)
         # Nothing happens, we just get a message.
         self.logger.warn.assert_called_once_with("Assuming the distribution we've just built and the one on sentinel.owner/sentinel.channel are the same.")
 
@@ -116,7 +116,8 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
                     'https://foo.bar/wibble/{}/osx-64'.format(source_owner)]:
             with self.dist_exists_setup(on_owner=False, on_channel=False):
                 with mock.patch('conda_build_all.inspect_binstar.copy_distribution_to_owner') as copy:
-                    ad.make_available(meta, config, url, just_built=False)
+                    ad.make_available(meta, url, just_built=False,
+                                      config=config)
             copy.assert_called_once_with(ad._cli, source_owner, owner, meta, channel=channel)
 
     def test_from_spec_owner(self):
@@ -146,17 +147,17 @@ class Test_DirectoryDestination(unittest.TestCase):
     def test_not_copying(self):
         dd = DirectoryDestination(self.tmp_dir)
         dd.make_available(mock.sentinel.dummy_meta,
-                          mock.sentinel.dummy_config,
                           mock.sentinel.dummy_path,
-                          just_built=False)
+                          just_built=False,
+                          config=mock.sentinel.dummy_config)
 
     def test_copying(self):
         dd = DirectoryDestination(self.tmp_dir)
         with mock.patch('shutil.copy') as copy:
             dd.make_available(mock.sentinel.dummy_meta,
-                              mock.sentinel.dummy_config,
                               mock.sentinel.dummy_path,
-                              just_built=True)
+                              just_built=True,
+                              config=mock.sentinel.dummy_config)
         copy.assert_called_once_with(mock.sentinel.dummy_path, self.tmp_dir)
 
 

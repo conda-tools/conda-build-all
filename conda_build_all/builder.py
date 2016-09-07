@@ -261,9 +261,10 @@ class Builder(object):
             was_built = built_dist_location is None
             if was_built:
                 built_dist_location = self.build(meta, build_config)
-            self.post_build(meta, built_dist_location, was_built)
+            self.post_build(meta, built_dist_location, was_built,
+                            config=build_config)
 
-    def post_build(self, meta, config, built_dist_location, was_built):
+    def post_build(self, meta, built_dist_location, was_built, config=None):
         """
         The post build phase occurs whether or not a build has actually taken place.
         It is the point at which a distribution is transfered to the desired artefact
@@ -275,7 +276,10 @@ class Builder(object):
             The distribution for which we are running the post-build phase
         build_dist_location : str
             The location of the built .tar.bz2 file for the given meta.
+        config
+            The conda-build configuration for the build.
 
         """
         for artefact_destination in self.artefact_destinations:
-            artefact_destination.make_available(meta, config, built_dist_location, was_built)
+            artefact_destination.make_available(meta, built_dist_location, was_built,
+                                                config=config)
