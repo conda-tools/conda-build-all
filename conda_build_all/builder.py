@@ -227,7 +227,7 @@ class Builder(object):
         return all_distros
 
     def main(self):
-        index = get_index(use_cache=True)
+        index = get_index(use_cache=False)
         if hasattr(conda_build, 'api'):
             build_config = conda_build.api.Config()
         else:
