@@ -39,7 +39,10 @@ def build(meta, test=True):
 
 def upload(cli, meta, owner, channels=['main'], config=None):
     """Upload a distribution, given the build metadata."""
-    fname = bldpkg_path(meta, config)
+    if hasattr(conda_build, 'api'):
+        fname = bldpkg_path(meta, config)
+    else:
+        fname = bldpkg_path(meta)
     package_type = detect_package_type(fname)
     package_attrs, release_attrs, file_attrs = get_attrs(package_type, fname)
     package_name = package_attrs['name']
