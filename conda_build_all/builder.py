@@ -39,7 +39,11 @@ from . import resolved_distribution
 
 def package_built_name(package, root_dir):
     package_dir = os.path.join(root_dir, package)
-    return conda_build.api.get_output_file_path(package_dir)
+    if hasattr(conda_build, 'api'):
+        return conda_build.api.get_output_file_path(package_dir)
+    else:
+        meta = MetaData(package_dir)
+        return bldpkg_path(meta)
 
 
 def distribution_exists(binstar_cli, owner, metadata):
