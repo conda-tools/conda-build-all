@@ -9,7 +9,12 @@ import conda_build.build as build_module
 from conda_build.metadata import MetaData
 import conda_build.config
 from conda.lock import Locked
-from conda_build.build import bldpkg_path
+
+try:
+    from conda_build.api import get_output_file_path
+except ImportError:
+    from conda_build.build import bldpkg_path as get_output_file_path
+
 import conda_build.source
 import binstar_client
 from binstar_client.utils.detect import detect_package_type, get_attrs
@@ -39,10 +44,7 @@ def build(meta, test=True):
 
 def upload(cli, meta, owner, channels=['main'], config=None):
     """Upload a distribution, given the build metadata."""
-    if hasattr(conda_build, 'api'):
-        fname = bldpkg_path(meta, config)
-    else:
-        fname = bldpkg_path(meta)
+    fname = get_output_file_path(meta)
     package_type = detect_package_type(fname)
     package_attrs, release_attrs, file_attrs = get_attrs(package_type, fname)
     package_name = package_attrs['name']
