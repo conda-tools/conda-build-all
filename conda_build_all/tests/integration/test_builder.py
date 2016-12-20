@@ -216,7 +216,7 @@ class Test_compute_build_distros(RecipeCreatingUnit):
                     'my_py_package-2.0-py35_0']
         self.assertEqual([meta.dist() for meta in distributions], expected)
         # Check that we didn't change the index.
-        self.assertEqual(index, {}) 
+        self.assertEqual(index, {})
 
 
 if __name__ == '__main__':
