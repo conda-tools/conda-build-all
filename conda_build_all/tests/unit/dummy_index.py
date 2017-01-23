@@ -4,6 +4,7 @@ import os
 from conda_build.index import write_repodata
 try:
     import conda_build.api
+    from conda_build.utils import get_lock
     extra_config = False
 except ImportError:
     import conda_build
@@ -70,7 +71,8 @@ class DummyIndex(dict):
         if not os.path.exists(channel_subdir):
             os.mkdir(channel_subdir)
         if hasattr(conda_build, 'api'):
-            write_repodata({'packages': self, 'info': {}}, channel_subdir, conda_build.api.Config())
+            lock = get_lock(channel_subdir)
+            write_repodata({'packages': self, 'info': {}}, channel_subdir, lock, config=conda_build.api.Config())
         else:
             write_repodata({'packages': self, 'info': {}}, channel_subdir)
 
