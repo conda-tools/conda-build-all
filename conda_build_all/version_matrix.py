@@ -223,12 +223,12 @@ def special_case_version_matrix(meta, index):
                 if case_base in cases:
                     cases.remove(case_base)
 
-        if 'r' in requirement_specs:
-            r_spec = requirement_specs.pop('r')
+        if 'r-base' in requirement_specs:
+            r_spec = requirement_specs.pop('r-base')
             for case_base in list(cases or [()]):
                 for r_pkg in r.get_pkgs(r_spec):
                     r_vn = index[r_pkg.fn]['version']
-                    case = case_base + (('r', r_vn), )
+                    case = case_base + (('r-base', r_vn), )
                     add_case_if_soluble(case)
                 if case_base in cases:
                     cases.remove(case_base)
@@ -344,7 +344,7 @@ if hasattr(conda_build, 'api'):
                 config.CONDA_NPY = version
             elif pkg == 'perl':
                 config.CONDA_PERL = version
-            elif pkg == 'r':
+            elif pkg == 'r-base':
                 config.CONDA_R = version
             else:
                 raise NotImplementedError('Package {} not yet implemented.'
@@ -368,7 +368,7 @@ else:
                 config.CONDA_NPY = version
             elif pkg == 'perl':
                 config.CONDA_PERL = version
-            elif pkg == 'r':
+            elif pkg == 'r-base':
                 config.CONDA_R = version
             else:
                 raise NotImplementedError('Package {} not yet implemented.'

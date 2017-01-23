@@ -239,33 +239,33 @@ class Test_special_case_version_matrix(unittest.TestCase):
         self.assertEqual(r, expected)
 
     def test_r_matrix(self):
-        a = DummyPackage('pkgA', ['r'])
-        self.index.add_pkg('r', '4.5.6')
-        self.index.add_pkg('r', '4.5.7')
+        a = DummyPackage('pkgA', ['r-base'])
+        self.index.add_pkg('r-base', '4.5.6')
+        self.index.add_pkg('r-base', '4.5.7')
         r = special_case_version_matrix(a, self.index)
-        self.assertEqual(r, set(((('r', '4.5.6'),),
-                                 (('r', '4.5.7'),),
+        self.assertEqual(r, set(((('r-base', '4.5.6'),),
+                                 (('r-base', '4.5.7'),),
                                 ))
                          )
 
     def test_r_and_py_and_perl_matrix(self):
-        a = DummyPackage('pkgA', ['perl', 'python', 'r'])
+        a = DummyPackage('pkgA', ['perl', 'python', 'r-base'])
         self.index.add_pkg('perl', '4.5.6')
         self.index.add_pkg('perl', '4.5.7')
         self.index.add_pkg('python', '2.7')
         self.index.add_pkg('python', '3.5')
-        self.index.add_pkg('r', '1.2.3')
-        self.index.add_pkg('r', '4.5.6')
+        self.index.add_pkg('r-base', '1.2.3')
+        self.index.add_pkg('r-base', '4.5.6')
 
         r = special_case_version_matrix(a, self.index)
-        expected = set(((('python', '2.7'), ('perl', '4.5.6'), ('r', '1.2.3')),
-                        (('python', '2.7'), ('perl', '4.5.6'), ('r', '4.5.6')),
-                        (('python', '3.5'), ('perl', '4.5.6'), ('r', '1.2.3')),
-                        (('python', '3.5'), ('perl', '4.5.7'), ('r', '1.2.3')),
-                        (('python', '3.5'), ('perl', '4.5.7'), ('r', '4.5.6')),
-                        (('python', '2.7'), ('perl', '4.5.7'), ('r', '4.5.6')),
-                        (('python', '2.7'), ('perl', '4.5.7'), ('r', '1.2.3')),
-                        (('python', '3.5'), ('perl', '4.5.6'), ('r', '4.5.6')),
+        expected = set(((('python', '2.7'), ('perl', '4.5.6'), ('r-base', '1.2.3')),
+                        (('python', '2.7'), ('perl', '4.5.6'), ('r-base', '4.5.6')),
+                        (('python', '3.5'), ('perl', '4.5.6'), ('r-base', '1.2.3')),
+                        (('python', '3.5'), ('perl', '4.5.7'), ('r-base', '1.2.3')),
+                        (('python', '3.5'), ('perl', '4.5.7'), ('r-base', '4.5.6')),
+                        (('python', '2.7'), ('perl', '4.5.7'), ('r-base', '4.5.6')),
+                        (('python', '2.7'), ('perl', '4.5.7'), ('r-base', '1.2.3')),
+                        (('python', '3.5'), ('perl', '4.5.6'), ('r-base', '4.5.6')),
                         ))
         self.assertEqual(r, expected)
 

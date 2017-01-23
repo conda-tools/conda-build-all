@@ -111,7 +111,7 @@ class Test_setup_vn_mtx_case(unittest.TestCase):
     def test_perl_case(self):
         if hasattr(conda_build, 'api'):
             config = setup_vn_mtx_case([('perl', '9.10.11.12'), ('numpy', '1.23'),
-                                        ('python', '2.7'), ('r', '4.5.6')],
+                                        ('python', '2.7'), ('r-base', '4.5.6')],
                                        conda_build.api.Config())
             self.assertEqual(config.CONDA_PERL, '9.10.11.12')
             self.assertEqual(config.CONDA_NPY, 123)
@@ -119,7 +119,7 @@ class Test_setup_vn_mtx_case(unittest.TestCase):
             self.assertEqual(config.CONDA_R, '4.5.6')
         else:
             with setup_vn_mtx_case([('perl', '9.10.11.12'), ('numpy', '1.23'),
-                                        ('python', '2.7'), ('r', '4.5.6')]):
+                                        ('python', '2.7'), ('r-base', '4.5.6')]):
                 config = conda_build.config.config
                 self.assertEqual(config.CONDA_PERL, '9.10.11.12')
                 self.assertEqual(config.CONDA_NPY, 123)
