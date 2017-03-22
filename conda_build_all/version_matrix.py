@@ -170,6 +170,17 @@ def special_case_version_matrix(meta, index):
     cases = set()
     unsolvable_cases = set()
 
+    def get_pkgs(spec):
+        try:
+            return r.get_pkgs(spec)
+        except NO_PACKAGES_EXCEPTION:
+            # If no package is found in the channel, we do nothing
+            # this is reasonable because add_case_if_soluble does the same
+            # for concrete cases.
+            # This behavior is important because otherwise this will crash if
+            # a package is not available for a certain platform (e.g. win).
+            return []
+
     def add_case_if_soluble(case):
         # Whilst we strictly don't need to, shortcutting cases we've already seen makes a
         # *huge* performance difference.
@@ -192,13 +203,13 @@ def special_case_version_matrix(meta, index):
         if 'numpy' in requirement_specs:
             np_spec = requirement_specs.pop('numpy')
             py_spec = requirement_specs.pop('python', None)
-            for numpy_pkg in r.get_pkgs(np_spec):
+            for numpy_pkg in get_pkgs(np_spec):
                 np_vn = minor_vn(index[numpy_pkg.fn]['version'])
                 numpy_deps = index[numpy_pkg.fn]['depends']
                 numpy_deps = {MatchSpec(spec).name: MatchSpec(spec)
                               for spec in numpy_deps}
                 # This would be problematic if python wasn't a dep of numpy.
-                for python_pkg in r.get_pkgs(numpy_deps['python']):
+                for python_pkg in get_pkgs(numpy_deps['python']):
                     if py_spec and not py_spec.match(python_pkg.fn):
                         continue
                     py_vn = minor_vn(index[python_pkg.fn]['version'])
@@ -208,7 +219,7 @@ def special_case_version_matrix(meta, index):
                     add_case_if_soluble(case)
         elif 'python' in requirement_specs:
             py_spec = requirement_specs.pop('python')
-            for python_pkg in r.get_pkgs(py_spec):
+            for python_pkg in get_pkgs(py_spec):
                 py_vn = minor_vn(index[python_pkg.fn]['version'])
                 case = (('python', py_vn), )
                 add_case_if_soluble(case)
@@ -216,7 +227,7 @@ def special_case_version_matrix(meta, index):
         if 'perl' in requirement_specs:
             pl_spec = requirement_specs.pop('perl')
             for case_base in list(cases or [()]):
-                for perl_pkg in r.get_pkgs(pl_spec):
+                for perl_pkg in get_pkgs(pl_spec):
                     pl_vn = index[perl_pkg.fn]['version']
                     case = case_base + (('perl', pl_vn), )
                     add_case_if_soluble(case)
@@ -226,7 +237,7 @@ def special_case_version_matrix(meta, index):
         if 'r-base' in requirement_specs:
             r_spec = requirement_specs.pop('r-base')
             for case_base in list(cases or [()]):
-                for r_pkg in r.get_pkgs(r_spec):
+                for r_pkg in get_pkgs(r_spec):
                     r_vn = index[r_pkg.fn]['version']
                     case = case_base + (('r-base', r_vn), )
                     add_case_if_soluble(case)
