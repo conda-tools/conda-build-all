@@ -41,7 +41,7 @@ install:
 
     # Now do the things we need to do to install it.
     - conda install -c conda-forge --file requirements.txt nose mock python=${PYTHON} ${EXTRA_DEPS} --yes --quiet
-    - if [[ -n {CONDA_ORIGIN} ]]; then conda install -yq -f -c ${CONDA_ORIGIN} conda; fi
+    - if [[ -n ${CONDA_ORIGIN} ]]; then conda install -yq -f -c ${CONDA_ORIGIN} conda; fi
     - python setup.py install
     - mkdir not_the_source_root && cd not_the_source_root
 
