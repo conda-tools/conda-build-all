@@ -12,6 +12,8 @@ env:
        # Secure BINSTAR_TOKEN for pelson/conda-build-all which can write to Obvious-CI-tests
        - secure: Dz1ZWH583kXz725IUSU32en048qGnweQZqrONg9CmDZuBwb3hE6CZ/qpXlKxLD6pqrV1fRJLxhoJo+7wS828GVdg5nfGdw1TyJdSsIDVjXjVMKRGx4fJagodE83E1sjBgyFrh7z/giHmT65+mExS4lzGBM56fOoVrNk2+WTF31xsPAMimF1qLvNA9vBpOExjpxaugFaZwRdhWqYMHT2RtLUnFPjtOWvj0Q0MlLUjoXznTRTl6YLN2jyRbEg42R62goXgp6hAVQ7Dn/OfV4ax8pofiStwmMSFdyfx3Y60xEGAwopO5DzYNVqwO4t2lvoIq9jkQH3RQCtNjEZ8KcewuLym+RapRcidAwUwhaW3K7IDqbiSmaD5x6wgwZripfl+LHcWgXup0gK/eYVwrVh3hsa6ATwpc7/qMMSR1AEhHooUv6bNzASSeZmiBh/2gvq7Kob+WAa+RgwdCc1wOGsmWdicvLWSTwvnriHDrUYqS/uixV5A7C+o8VsnQC2Lcx24pO50NBhSSBpp73yHNmaQIwwEmxDEBUiFqtYz/V0peck+UQMHi+sgR/V8xB2dVQiyxaZI3/UAGtBqf3qtOGRiLQ3kFW8DAbi/2t19xk8c0FLf17ELTxURiFjTPQ78qmDDaI6MmK2bhi9IjTFBLLJU4m2ziW2l0MrTm4w3dwU7kls=
     matrix:
+        allow_failures:
+          - CONDA_ORIGIN: defaults
         - PYTHON=2.7
         - PYTHON=3.4
         - PYTHON=3.5
@@ -20,8 +22,6 @@ env:
           CONDA_BUILD_ALL_TEST_ANACONDA_CLOUD=1
         - PYTHON=3.5
           CONDA_ORIGIN=defaults
-        allow_failures:
-          - CONDA_ORIGIN: defaults
 
 install:
     - mkdir -p ${HOME}/cache/pkgs
