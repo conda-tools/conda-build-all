@@ -126,8 +126,11 @@ def special_case_version_matrix(meta, index):
         ... build ...
 
     """
-    from conda.models.dist import Dist
-    index = {Dist(key): index[key] for key in index.keys()}
+    try:
+        from conda.models.dist import Dist
+        index = {Dist(key): index[key] for key in index.keys()}
+    except ImportError:
+        pass
     r = conda.resolve.Resolve(index)
 
     requirements = meta.get_value('requirements/build', [])
