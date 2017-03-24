@@ -177,7 +177,8 @@ def special_case_version_matrix(meta, index):
 
     def get_pkgs(spec):
         try:
-            return r.get_dists_for_spec(spec)
+            # should be r.get_dists_for_spec(spec) for conda-4.3+
+            return r.get_pkgs(spec)
         except NO_PACKAGES_EXCEPTION:
             # If no package is found in the channel, we do nothing
             # this is reasonable because add_case_if_soluble does the same
