@@ -218,7 +218,7 @@ class Builder(object):
             from conda.models.dist import Dist
             index = {Dist(key):index[key] for key in index.keys()}
         except ImportError:
-            pass
+            index = index.copy()
         for meta in recipes:
             distros = resolved_distribution.ResolvedDistribution.resolve_all(meta, index,
                                                                              self.matrix_conditions)
