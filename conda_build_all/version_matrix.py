@@ -129,8 +129,11 @@ def special_case_version_matrix(meta, index):
     try:
         from conda.models.dist import Dist
         index = {Dist(key): index[key] for key in index.keys()}
+        def get_key(dist_or_filename):
+            return dist_or_filename
     except ImportError:
-        pass
+        def get_key(dist_or_filename):
+            return dist_or_filename.fn
     r = conda.resolve.Resolve(index)
 
     requirements = meta.get_value('requirements/build', [])
@@ -210,15 +213,15 @@ def special_case_version_matrix(meta, index):
             np_spec = requirement_specs.pop('numpy')
             py_spec = requirement_specs.pop('python', None)
             for numpy_pkg in get_pkgs(np_spec):
-                np_vn = minor_vn(index[numpy_pkg]['version'])
-                numpy_deps = index[numpy_pkg]['depends']
+                np_vn = minor_vn(index[get_key(numpy_pkg)]['version'])
+                numpy_deps = index[get_key(numpy_pkg)]['depends']
                 numpy_deps = {MatchSpec(spec).name: MatchSpec(spec)
                               for spec in numpy_deps}
                 # This would be problematic if python wasn't a dep of numpy.
                 for python_pkg in get_pkgs(numpy_deps['python']):
-                    if py_spec and not py_spec.match(python_pkg):
+                    if py_spec and not py_spec.match(get_key(python_pkg)):
                         continue
-                    py_vn = minor_vn(index[python_pkg]['version'])
+                    py_vn = minor_vn(index[get_key(python_pkg)]['version'])
                     case = (('python', py_vn),
                             ('numpy', np_vn),
                             )
@@ -226,7 +229,7 @@ def special_case_version_matrix(meta, index):
         elif 'python' in requirement_specs:
             py_spec = requirement_specs.pop('python')
             for python_pkg in get_pkgs(py_spec):
-                py_vn = minor_vn(index[python_pkg]['version'])
+                py_vn = minor_vn(index[get_key(python_pkg)]['version'])
                 case = (('python', py_vn), )
                 add_case_if_soluble(case)
 
@@ -234,7 +237,7 @@ def special_case_version_matrix(meta, index):
             pl_spec = requirement_specs.pop('perl')
             for case_base in list(cases or [()]):
                 for perl_pkg in get_pkgs(pl_spec):
-                    pl_vn = index[perl_pkg]['version']
+                    pl_vn = index[get_key(perl_pkg)]['version']
                     case = case_base + (('perl', pl_vn), )
                     add_case_if_soluble(case)
                 if case_base in cases:
@@ -244,7 +247,7 @@ def special_case_version_matrix(meta, index):
             r_spec = requirement_specs.pop('r-base')
             for case_base in list(cases or [()]):
                 for r_pkg in get_pkgs(r_spec):
-                    r_vn = index[r_pkg]['version']
+                    r_vn = index[get_key(r_pkg)]['version']
                     case = case_base + (('r-base', r_vn), )
                     add_case_if_soluble(case)
                 if case_base in cases:
