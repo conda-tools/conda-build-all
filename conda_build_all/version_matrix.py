@@ -258,6 +258,12 @@ def special_case_version_matrix(meta, index):
 
     return set(cases)
 
+def _ensure_dist_or_dict(fn):
+    try:
+        from conda.models.dist import Dist
+        return Dist.from_string(fn)
+    except ImportError:
+        return fn
 
 def filter_cases(cases, extra_specs):
     """
@@ -272,7 +278,6 @@ def filter_cases(cases, extra_specs):
 
     """
     specs = [MatchSpec(spec) for spec in extra_specs]
-    from conda.models.dist import Dist
 
     for case in cases:
         # Invent a sensible "tar.bz2" name which we can use to invoke conda's
@@ -283,7 +288,7 @@ def filter_cases(cases, extra_specs):
         for spec in specs:
             # Only run the filter on the packages in cases.
             if spec.name in cases_by_pkg_name:
-                match.append(bool(spec.match(Dist.from_string(cases_by_pkg_name[spec.name]))))
+                match.append(bool(spec.match(_ensure_dist_or_dict(cases_by_pkg_name[spec.name]))))
         if all(match):
             yield case
 
