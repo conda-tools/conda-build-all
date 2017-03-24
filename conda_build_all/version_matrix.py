@@ -126,6 +126,8 @@ def special_case_version_matrix(meta, index):
         ... build ...
 
     """
+    from conda.models.dist import Dist
+    index = {Dist(key): index[key] for key in index.keys()}
     r = conda.resolve.Resolve(index)
 
     requirements = meta.get_value('requirements/build', [])
@@ -172,7 +174,7 @@ def special_case_version_matrix(meta, index):
 
     def get_pkgs(spec):
         try:
-            return r.get_pkgs(spec)
+            return r.get_dists_for_spec(spec)
         except NO_PACKAGES_EXCEPTION:
             # If no package is found in the channel, we do nothing
             # this is reasonable because add_case_if_soluble does the same
@@ -204,15 +206,15 @@ def special_case_version_matrix(meta, index):
             np_spec = requirement_specs.pop('numpy')
             py_spec = requirement_specs.pop('python', None)
             for numpy_pkg in get_pkgs(np_spec):
-                np_vn = minor_vn(index[numpy_pkg.fn]['version'])
-                numpy_deps = index[numpy_pkg.fn]['depends']
+                np_vn = minor_vn(index[numpy_pkg]['version'])
+                numpy_deps = index[numpy_pkg]['depends']
                 numpy_deps = {MatchSpec(spec).name: MatchSpec(spec)
                               for spec in numpy_deps}
                 # This would be problematic if python wasn't a dep of numpy.
                 for python_pkg in get_pkgs(numpy_deps['python']):
-                    if py_spec and not py_spec.match(python_pkg.fn):
+                    if py_spec and not py_spec.match(python_pkg):
                         continue
-                    py_vn = minor_vn(index[python_pkg.fn]['version'])
+                    py_vn = minor_vn(index[python_pkg]['version'])
                     case = (('python', py_vn),
                             ('numpy', np_vn),
                             )
@@ -220,7 +222,7 @@ def special_case_version_matrix(meta, index):
         elif 'python' in requirement_specs:
             py_spec = requirement_specs.pop('python')
             for python_pkg in get_pkgs(py_spec):
-                py_vn = minor_vn(index[python_pkg.fn]['version'])
+                py_vn = minor_vn(index[python_pkg]['version'])
                 case = (('python', py_vn), )
                 add_case_if_soluble(case)
 
@@ -228,7 +230,7 @@ def special_case_version_matrix(meta, index):
             pl_spec = requirement_specs.pop('perl')
             for case_base in list(cases or [()]):
                 for perl_pkg in get_pkgs(pl_spec):
-                    pl_vn = index[perl_pkg.fn]['version']
+                    pl_vn = index[perl_pkg]['version']
                     case = case_base + (('perl', pl_vn), )
                     add_case_if_soluble(case)
                 if case_base in cases:
@@ -238,7 +240,7 @@ def special_case_version_matrix(meta, index):
             r_spec = requirement_specs.pop('r-base')
             for case_base in list(cases or [()]):
                 for r_pkg in get_pkgs(r_spec):
-                    r_vn = index[r_pkg.fn]['version']
+                    r_vn = index[r_pkg]['version']
                     case = case_base + (('r-base', r_vn), )
                     add_case_if_soluble(case)
                 if case_base in cases:
@@ -270,6 +272,7 @@ def filter_cases(cases, extra_specs):
 
     """
     specs = [MatchSpec(spec) for spec in extra_specs]
+    from conda.models.dist import Dist
 
     for case in cases:
         # Invent a sensible "tar.bz2" name which we can use to invoke conda's
@@ -280,7 +283,7 @@ def filter_cases(cases, extra_specs):
         for spec in specs:
             # Only run the filter on the packages in cases.
             if spec.name in cases_by_pkg_name:
-                match.append(bool(spec.match(cases_by_pkg_name[spec.name])))
+                match.append(bool(spec.match(Dist.from_string(cases_by_pkg_name[spec.name]))))
         if all(match):
             yield case
 
