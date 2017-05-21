@@ -63,8 +63,15 @@ def upload(cli, meta, owner, channels=['main'], config=None):
         cli.release(owner, package_name, version)
     except binstar_client.NotFound:
         # TODO: Add readme.md support for descriptions?
-        cli.add_release(owner, package_name, version, requirements=[], announce=None,
-                        description='')
+
+        # The signature for add_release changed in anaconda-client 1.6.3.
+        # First try the old signature, and if that fails, use the new.
+        try:
+            cli.add_release(owner, package_name, version, requirements=[],
+                            announce=None, description='')
+        except TypeError:
+            cli.add_release(owner, package_name, version, requirements=[],
+                            announce=None, {description: ''})
 
     try:
         cli.distribution(owner, package_name, version, file_attrs['basename'])
