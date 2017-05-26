@@ -71,7 +71,7 @@ def upload(cli, meta, owner, channels=['main'], config=None):
                             announce=None, description='')
         except TypeError:
             cli.add_release(owner, package_name, version, requirements=[],
-                            announce=None, {description: ''})
+                            announce=None, release_attrs={'description': ''})
 
     try:
         cli.distribution(owner, package_name, version, file_attrs['basename'])
