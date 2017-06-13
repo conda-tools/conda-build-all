@@ -21,10 +21,6 @@ env:
         - PYTHON=3.5
           CONDA_ORIGIN=defaults
 
-matrix:
-  allow_failures:
-    - env: CONDA_ORIGIN=defaults
-
 install:
     - mkdir -p ${HOME}/cache/pkgs
     - "[ ! -f ${HOME}/cache/miniconda.sh ] && wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ${HOME}/cache/miniconda.sh || :"
