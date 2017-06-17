@@ -129,7 +129,8 @@ class Builder(object):
     def __init__(self, conda_recipes_directory,
                  inspection_channels, inspection_directories,
                  artefact_destinations,
-                 matrix_conditions, matrix_max_n_major_minor_versions=(2, 2)):
+                 matrix_conditions, matrix_max_n_major_minor_versions=(2, 2),
+                 dry_run=False):
         """
         Build a directory of conda recipes sequentially, if they don't already exist in the inspection locations.
 
@@ -149,6 +150,9 @@ class Builder(object):
             The number of major and minor versions to preserve for each resolved recipe. For instance,
             if a recipe can be built against np 1.7, 1.8 and 1.9, and the number of minor versions is 2,
             the build matrix will prune the 1.7 option.
+        dry_run : bool
+            True to stop before building recipes but after determining which
+            recipes to build.
 
         """
         self.conda_recipes_directory = conda_recipes_directory
@@ -157,6 +161,7 @@ class Builder(object):
         self.artefact_destinations = artefact_destinations
         self.matrix_conditions = matrix_conditions
         self.matrix_max_n_major_minor_versions = matrix_max_n_major_minor_versions
+        self.dry_run = dry_run
 
     def fetch_all_metas(self, config):
         """
@@ -242,7 +247,7 @@ class Builder(object):
             build_config = conda_build.config.config
 
         # If it is not already defined with environment variables, we set the CONDA_NPY
-        # to the latest possible value. Since we compute a build matrix anyway, this is 
+        # to the latest possible value. Since we compute a build matrix anyway, this is
         # useful to prevent conda-build bailing if the recipe depends on it (e.g.
         # ``numpy x.x``), and to ensure that recipes that don't care which version they want
         # at build/test time get a sensible version.
@@ -264,6 +269,10 @@ class Builder(object):
         print('Resolved dependencies, will be built in the following order: \n\t{}'.format(
               '\n\t'.join(['{} (will be built: {})'.format(meta.dist(), dist_locn is None)
                            for meta, dist_locn in recipes_and_dist_locn])))
+
+        if self.dry_run:
+            print('Dry run: no distributions built')
+            return
 
         for meta, built_dist_location in recipes_and_dist_locn:
             was_built = built_dist_location is None
