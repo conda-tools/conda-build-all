@@ -45,6 +45,14 @@ class Test_special_case_version_matrix(unittest.TestCase):
                                 ))
                          )
 
+    def test_noarch_python(self):
+        a = DummyPackage('pkgA', ['python'])
+        a.noarch = 'python'
+        self.index.add_pkg('python', '2.7.2')
+        self.index.add_pkg('python', '3.5.0')
+        r = special_case_version_matrix(a, self.index)
+        self.assertEqual(r, set(((), )))
+
     def test_constrained_python(self):
         a = DummyPackage('pkgA', ['python <3'])
         self.index.add_pkg('python', '2.7.2')
