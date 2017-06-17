@@ -227,11 +227,15 @@ def special_case_version_matrix(meta, index):
                             )
                     add_case_if_soluble(case)
         elif 'python' in requirement_specs:
-            py_spec = requirement_specs.pop('python')
-            for python_pkg in get_pkgs(py_spec):
-                py_vn = minor_vn(index[get_key(python_pkg)]['version'])
-                case = (('python', py_vn), )
-                add_case_if_soluble(case)
+            if getattr(meta, 'noarch', None) == 'python':
+                # no python version dependency on noarch: python recipes
+                add_case_if_soluble(())
+            else:
+                py_spec = requirement_specs.pop('python')
+                for python_pkg in get_pkgs(py_spec):
+                    py_vn = minor_vn(index[get_key(python_pkg)]['version'])
+                    case = (('python', py_vn), )
+                    add_case_if_soluble(case)
 
         if 'perl' in requirement_specs:
             pl_spec = requirement_specs.pop('perl')
