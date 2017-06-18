@@ -69,7 +69,7 @@ def main():
     inspection_directories = args.inspect_directories or []
     if (not args.no_inspect_conda_bld_directory and
             os.path.isdir(build_config.bldpkgs_dir)):
-        inspection_directories.append(build_config.bldpkgs_dir)
+        inspection_directories.extend(build_config.bldpkgs_dirs)
 
     artefact_destinations = []
     for channel in args.upload_channels:
