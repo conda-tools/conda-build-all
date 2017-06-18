@@ -62,6 +62,29 @@ class Test_build(RecipeCreatingUnit):
         self.assertEqual(os.path.abspath(r), r)
         self.assertEqual(os.path.basename(r), 'pkg1-1.0-0.tar.bz2')
 
+    def test_noarch_python(self):
+        pkg1 = self.write_meta('pkg1', """
+                    package:
+                        name: pkg1
+                        version: 1.0
+                    build:
+                        noarch: python
+                    requirements:
+                        build:
+                            - python
+                        run:
+                            - python
+                    """)
+        pkg1_resolved = ResolvedDistribution(pkg1, (['python', '3.5'], ))
+        builder = Builder(None, None, None, None, None)
+        if hasattr(conda_build, 'api'):
+            r = builder.build(pkg1_resolved, conda_build.api.Config())
+        else:
+            r = builder.build(pkg1_resolved, conda_build.config.config)
+        self.assertTrue(os.path.exists(r))
+        self.assertEqual(os.path.abspath(r), r)
+        self.assertEqual(os.path.basename(r), 'pkg1-1.0-py_0.tar.bz2')
+
     def test_numpy_dep(self):
         pkg1 = self.write_meta('pkg1', """
                     package:
