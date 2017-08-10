@@ -17,10 +17,9 @@ import posixpath as urlpath
 
 import binstar_client.utils
 import binstar_client
-from conda.api import get_index
+from .conda_interface import get_index
 from conda_build.metadata import MetaData
 from conda_build.build import bldpkg_path
-import conda.config
 
 from . import inspect_binstar
 from . import build

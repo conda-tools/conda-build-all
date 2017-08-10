@@ -1,9 +1,8 @@
 # NOTE: This module has no unit tests.
 
-import conda.config
 import binstar_client
 from conda_build.build import bldpkg_path
-from conda.api import get_index
+from .conda_interface import get_index, subdir
 
 
 def distribution_exists(binstar_cli, owner, metadata):
@@ -12,7 +11,7 @@ def distribution_exists(binstar_cli, owner, metadata):
 
     This does not check specific channels - it is either on binstar or it is not.
     """
-    fname = '{}/{}.tar.bz2'.format(conda.config.subdir, metadata.dist())
+    fname = '{}/{}.tar.bz2'.format(subdir, metadata.dist())
     try:
         r = binstar_cli.distribution(owner, metadata.name(), metadata.version(),
                                      fname)
@@ -37,7 +36,7 @@ def distribution_exists_on_channel(binstar_cli, owner, metadata, channel='main')
 
     try:
         on_channel = (distributions_on_channel[fname]['subdir'] ==
-                      conda.config.subdir)
+                      subdir)
     except KeyError:
         on_channel = False
     return on_channel
@@ -51,7 +50,7 @@ def add_distribution_to_channel(binstar_cli, owner, metadata, channel='main'):
     so if you have a foo-0.1-np18 and foo-0.1-np19 *both* will be added to the channel.
 
     """
-    package_fname = '{}/{}.tar.bz2'.format(conda.config.subdir, metadata.dist())
+    package_fname = '{}/{}.tar.bz2'.format(subdir, metadata.dist())
     binstar_cli.add_channel(channel, owner, metadata.name(), metadata.version())#filename=package_fname)
 
 
@@ -61,7 +60,7 @@ def copy_distribution_to_owner(binstar_cli, source_owner, dest_owner,
     Copy an already existing distribution from one owner to another on
     anaconda.
     """
-    package_fname = '{}/{}.tar.bz2'.format(conda.config.subdir, metadata.dist())
+    package_fname = '{}/{}.tar.bz2'.format(subdir, metadata.dist())
     binstar_cli.copy(source_owner, metadata.name(), metadata.version(),
                      basename=package_fname, to_owner=dest_owner,
                      to_channel=channel)

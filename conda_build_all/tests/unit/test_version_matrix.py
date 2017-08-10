@@ -1,7 +1,6 @@
 import unittest
 
-import conda.config
-from conda.resolve import MatchSpec
+from conda_build_all.conda_interface import MatchSpec
 
 from conda_build_all.version_matrix import (parse_specifications,
                                             special_case_version_matrix,

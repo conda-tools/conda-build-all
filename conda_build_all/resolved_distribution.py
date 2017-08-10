@@ -1,7 +1,6 @@
 from __future__ import print_function
 
-from conda.api import get_index
-import conda.config
+from .conda_interface import get_index
 import conda_build.config
 
 
