@@ -19,8 +19,8 @@ import os
 
 from binstar_client.utils import get_binstar
 import binstar_client
-from conda.api import get_index
-import conda.config
+from .conda_interface import Resolve, get_index, subdir, copy_index
+
 try:
     import conda_build.api
 except ImportError:
@@ -47,7 +47,7 @@ def package_built_name(package, root_dir):
 
 
 def distribution_exists(binstar_cli, owner, metadata):
-    fname = '{}/{}.tar.bz2'.format(conda.config.subdir, metadata.dist())
+    fname = '{}/{}.tar.bz2'.format(subdir, metadata.dist())
     try:
         r = binstar_cli.distribution(owner, metadata.name(), metadata.version(),
                                      fname)
@@ -219,11 +219,8 @@ class Builder(object):
 
         """
         all_distros = []
-        try:
-            from conda.models.dist import Dist
-            index = {Dist(key):index[key] for key in index.keys()}
-        except ImportError:
-            index = index.copy()
+        index = copy_index(index)
+
         for meta in recipes:
             distros = resolved_distribution.ResolvedDistribution.resolve_all(meta, index,
                                                                              self.matrix_conditions)
@@ -252,7 +249,7 @@ class Builder(object):
         # ``numpy x.x``), and to ensure that recipes that don't care which version they want
         # at build/test time get a sensible version.
         if build_config.CONDA_NPY is None:
-            resolver = conda.resolve.Resolve(index)
+            resolver = Resolve(index)
             npy = resolver.get_pkgs('numpy', emptyok=True)
             if npy:
                 version = ''.join(max(npy).version.split('.')[:2])

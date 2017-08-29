@@ -9,8 +9,8 @@ try:
 except ImportError:
     import conda_build
     extra_config = True
-import conda.config
 
+from conda_build_all.conda_interface import subdir
 
 _DummyPackage = collections.namedtuple('_DummyPackage',
                                        ['pkg_name', 'build_deps',
@@ -53,7 +53,7 @@ class DummyIndex(dict):
         else:
             build_string = build_number
         pkg_info = dict(name=name, version=version, build_number=build_number,
-                        build=build_string, subdir=conda.config.subdir,
+                        build=build_string, subdir=subdir,
                         depends=tuple(depends), **extra_items)
         self['{}-{}-{}.tar.bz2'.format(name, version, build_string)] = pkg_info
 
@@ -67,7 +67,7 @@ class DummyIndex(dict):
     def write_to_channel(self, dest):
         # Write the index to a channel. Useful to get conda to read it back in again
         # using conda.api.get_index().
-        channel_subdir = os.path.join(dest, conda.config.subdir)
+        channel_subdir = os.path.join(dest, subdir)
         if not os.path.exists(channel_subdir):
             os.mkdir(channel_subdir)
         if hasattr(conda_build, 'api'):

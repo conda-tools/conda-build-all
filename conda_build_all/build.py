@@ -8,7 +8,7 @@ import shutil
 import conda_build.build as build_module
 from conda_build.metadata import MetaData
 import conda_build.config
-from conda.lock import Locked
+from .conda_interface import Locked
 
 try:
     from conda_build.api import get_output_file_path

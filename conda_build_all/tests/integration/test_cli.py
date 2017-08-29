@@ -14,7 +14,6 @@ import textwrap
 import unittest
 
 from binstar_client.utils import get_binstar
-import conda.config
 
 from conda_build_all.build import build, upload
 from conda_build_all.inspect_binstar import (distribution_exists,
@@ -22,6 +21,7 @@ from conda_build_all.inspect_binstar import (distribution_exists,
                                              add_distribution_to_channel)
 from conda_build_all.tests.integration.test_builder import RecipeCreatingUnit
 from conda_build_all.resolved_distribution import ResolvedDistribution
+from conda_build_all.conda_interface import subdir
 
 
 def clear_binstar(cli, owner):
@@ -129,14 +129,14 @@ class Test(RecipeCreatingUnit):
         self.assertFalse(distribution_exists_on_channel(CLIENT, OWNER, a_py99, channel='testing'))
 
         # Remove the built distribution, re-run, and assert that we didn't bother re-building.
-        dist_path = os.path.join(self.conda_bld_root, conda.config.subdir, a_py21.pkg_fn())
+        dist_path = os.path.join(self.conda_bld_root, subdir, a_py21.pkg_fn())
         self.assertTrue(os.path.exists(dist_path))
         os.remove(dist_path)
         self.call([self.recipes_root_dir, '--inspect-channel', testing_channel, '--upload-channel', testing_channel])
         self.assertFalse(os.path.exists(dist_path))
 
         # Now put a condition in. In this case, only build dists for py<2
-        CLIENT.remove_dist(OWNER, a_py21.name(), a_py21.version(), '{}/{}'.format(conda.config.subdir, a_py21.pkg_fn()))
+        CLIENT.remove_dist(OWNER, a_py21.name(), a_py21.version(), '{}/{}'.format(subdir, a_py21.pkg_fn()))
         self.assertFalse(distribution_exists_on_channel(CLIENT, OWNER, a_py21, channel='testing'))
         self.call([self.recipes_root_dir, '--inspect-channel', testing_channel, '--upload-channel', testing_channel,
                    '--matrix-condition', 'python <2'])

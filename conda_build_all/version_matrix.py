@@ -1,27 +1,27 @@
 from contextlib import contextmanager
 from collections import defaultdict
 import logging
+import sys
 
-import conda.resolve
-from conda.resolve import MatchSpec
-from conda.resolve import stdoutlog
-from conda.console import SysStdoutWriteHandler
+from .conda_interface import (MatchSpec, Unsatisfiable, NoPackagesFound, Resolve,
+                              get_key, copy_index, ensure_dist_or_dict)
 
 try:
     import conda_build.api
 except ImportError:
     import conda_build.config
 
+NO_PACKAGES_EXCEPTION = (Unsatisfiable, NoPackagesFound)
 
-conda_stdoutlog = stdoutlog
 
-NO_PACKAGES_EXCEPTION = tuple(getattr(conda.resolve, attr)
-                              for attr in ['Unsatisfiable', 'NoPackagesFound'])
-
-class StdoutNewline(SysStdoutWriteHandler):
+class StdoutNewline(logging.Handler):
     def emit(self, record):
         record.msg += '\n'
-        SysStdoutWriteHandler.emit(self, record)
+        try:
+            sys.stdout.write(record.msg)
+            sys.stdout.flush()
+        except IOError:
+            pass
 
 
 stdout = logging.getLogger('conda_build_all.version_matrix.stdoutlog')
@@ -32,11 +32,6 @@ stdout.setLevel(logging.WARNING)
 @contextmanager
 def override_conda_logging(level):
     # Override the conda logging handlers.
-
-    # We need to import conda.fetch and conda.resolve to trigger the
-    # creation of the loggers in the first place.
-    import conda.fetch
-    import conda.resolve
 
     levels = {}
     handlers = {}
@@ -126,15 +121,8 @@ def special_case_version_matrix(meta, index):
         ... build ...
 
     """
-    try:
-        from conda.models.dist import Dist
-        index = {Dist(key): index[key] for key in index.keys()}
-        def get_key(dist_or_filename):
-            return dist_or_filename
-    except ImportError:
-        def get_key(dist_or_filename):
-            return dist_or_filename.fn
-    r = conda.resolve.Resolve(index)
+    index = copy_index(index)
+    r = Resolve(index)
 
     requirements = meta.get_value('requirements/build', [])
     requirement_specs = parse_specifications(requirements)
@@ -269,12 +257,6 @@ def special_case_version_matrix(meta, index):
 
     return set(cases)
 
-def _ensure_dist_or_dict(fn):
-    try:
-        from conda.models.dist import Dist
-        return Dist.from_string(fn)
-    except ImportError:
-        return fn
 
 def filter_cases(cases, extra_specs):
     """
@@ -299,7 +281,7 @@ def filter_cases(cases, extra_specs):
         for spec in specs:
             # Only run the filter on the packages in cases.
             if spec.name in cases_by_pkg_name:
-                match.append(bool(spec.match(_ensure_dist_or_dict(cases_by_pkg_name[spec.name]))))
+                match.append(bool(spec.match(ensure_dist_or_dict(cases_by_pkg_name[spec.name]))))
         if all(match):
             yield case
 
