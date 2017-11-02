@@ -19,7 +19,8 @@ import os
 
 from binstar_client.utils import get_binstar
 import binstar_client
-from .conda_interface import Resolve, get_index, subdir, copy_index
+from .conda_interface import (Resolve, get_index, subdir, copy_index,
+                              string_types)
 
 try:
     import conda_build.api
@@ -219,10 +220,13 @@ class Builder(object):
         print('Building ', meta.dist())
         config = meta.vn_context(config=config)
         try:
-            return conda_build.api.build(meta.meta, config=config)
+            output_paths = conda_build.api.build(meta.meta, config=config)
         except AttributeError:
             with meta.vn_context():
-                return bldpkg_path(build.build(meta.meta))
+                output_paths = bldpkg_path(build.build(meta.meta))
+        if isinstance(output_paths, string_types):
+            output_paths = [output_paths]
+        return output_paths
 
     def compute_build_distros(self, index, recipes, config):
         """

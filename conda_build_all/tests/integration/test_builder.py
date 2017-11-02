@@ -57,13 +57,9 @@ class Test_build(RecipeCreatingUnit):
         pkg1_resolved = ResolvedDistribution(pkg1, (()))
         builder = Builder(None, None, None, None, None)
         if hasattr(conda_build, 'api'):
-            r = builder.build(pkg1_resolved, conda_build.api.Config())
+            rs = builder.build(pkg1_resolved, conda_build.api.Config())
         else:
-            r = builder.build(pkg1_resolved, conda_build.config.config)
-        if isinstance(r, string_types):
-            rs = [r]
-        else:
-            rs = r
+            rs = builder.build(pkg1_resolved, conda_build.config.config)
         for r in rs:
             self.assertTrue(os.path.exists(r))
             self.assertEqual(os.path.abspath(r), r)
@@ -86,13 +82,9 @@ class Test_build(RecipeCreatingUnit):
         pkg1_resolved = ResolvedDistribution(pkg1, (['python', '3.5'], ))
         builder = Builder(None, None, None, None, None)
         if hasattr(conda_build, 'api'):
-            r = builder.build(pkg1_resolved, conda_build.api.Config())
+            rs = builder.build(pkg1_resolved, conda_build.api.Config())
         else:
-            r = builder.build(pkg1_resolved, conda_build.config.config)
-        if isinstance(r, string_types):
-            rs = [r]
-        else:
-            rs = r
+            rs = builder.build(pkg1_resolved, conda_build.config.config)
         for r in rs:
             self.assertTrue(os.path.exists(r))
             self.assertEqual(os.path.abspath(r), r)
@@ -115,13 +107,9 @@ class Test_build(RecipeCreatingUnit):
         pkg1_resolved = ResolvedDistribution(pkg1, (['python', '3.5'], ['numpy', '1.11']))
         builder = Builder(None, None, None, None, None)
         if hasattr(conda_build, 'api'):
-            r = builder.build(pkg1_resolved, conda_build.api.Config())
+            rs = builder.build(pkg1_resolved, conda_build.api.Config())
         else:
-            r = builder.build(pkg1_resolved, conda_build.config.config)
-        if isinstance(r, string_types):
-            rs = [r]
-        else:
-            rs = r
+            rs = builder.build(pkg1_resolved, conda_build.config.config)
         for r in rs:
             self.assertTrue(os.path.exists(r))
             self.assertEqual(os.path.abspath(r), r)
