@@ -87,8 +87,12 @@ def list_metas(directory, max_depth=0, config=None):
             if hasattr(conda_build, 'api'):
                 pkgs = conda_build.api.render(new_root, config=config,
                                         finalize=False, bypass_env_check=True)
+                # cb2 returns a tuple, with the metadata object as the first
+                #    element.  That's all we care about.
                 if hasattr(pkgs[0], 'config'):
                     pkgs = [pkgs[0]]
+                # cb3 returns a list of tuples, each with the metadata object
+                #    as the first element.  Collect them up.
                 else:
                     pkgs = [pkg[0] for pkg in pkgs]
                 packages.extend(pkgs)
