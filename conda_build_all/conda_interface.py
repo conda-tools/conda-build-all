@@ -13,6 +13,7 @@ if (4, 3) <= CONDA_VERSION_MAJOR_MINOR < (4, 4):
     from conda.exports import Unsatisfiable
     from conda.exports import NoPackagesFound
     from conda.exports import Resolve
+    from conda.exports import string_types
     from conda.models.dist import Dist as _Dist
 
     def get_key(dist_or_filename):
@@ -37,6 +38,7 @@ elif (4, 2) <= CONDA_VERSION_MAJOR_MINOR < (4, 3):
     from conda.exports import Unsatisfiable
     from conda.exports import NoPackagesFound
     from conda.exports import Resolve
+    from conda.exports import string_types
 
     def get_key(dist_or_filename):
         return dist_or_filename.fn
@@ -63,3 +65,4 @@ Locked = Locked
 Resolve, get_index = Resolve, get_index
 MatchSpec = MatchSpec
 Unsatisfiable, NoPackagesFound = Unsatisfiable, NoPackagesFound
+string_types = string_types
