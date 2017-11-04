@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 import os
+import re
 import shutil
 import tempfile
 import textwrap
@@ -11,6 +12,7 @@ except ImportError:
     import conda_build.config
 
 from conda_build.metadata import MetaData
+from conda_build_all.conda_interface import string_types
 
 from conda_build_all.resolved_distribution import ResolvedDistribution
 from conda_build_all.builder import Builder
@@ -55,12 +57,14 @@ class Test_build(RecipeCreatingUnit):
         pkg1_resolved = ResolvedDistribution(pkg1, (()))
         builder = Builder(None, None, None, None, None)
         if hasattr(conda_build, 'api'):
-            r = builder.build(pkg1_resolved, conda_build.api.Config())
+            rs = builder.build(pkg1_resolved, conda_build.api.Config())
         else:
-            r = builder.build(pkg1_resolved, conda_build.config.config)
-        self.assertTrue(os.path.exists(r))
-        self.assertEqual(os.path.abspath(r), r)
-        self.assertEqual(os.path.basename(r), 'pkg1-1.0-0.tar.bz2')
+            rs = builder.build(pkg1_resolved, conda_build.config.config)
+        for r in rs:
+            self.assertTrue(os.path.exists(r))
+            self.assertEqual(os.path.abspath(r), r)
+            self.assertTrue(bool(re.match('pkg1-1.0-(h[0-9a-f]{7}_)?0.tar.bz2',
+                                          os.path.basename(r))))
 
     def test_noarch_python(self):
         pkg1 = self.write_meta('pkg1', """
@@ -78,12 +82,14 @@ class Test_build(RecipeCreatingUnit):
         pkg1_resolved = ResolvedDistribution(pkg1, (['python', '3.5'], ))
         builder = Builder(None, None, None, None, None)
         if hasattr(conda_build, 'api'):
-            r = builder.build(pkg1_resolved, conda_build.api.Config())
+            rs = builder.build(pkg1_resolved, conda_build.api.Config())
         else:
-            r = builder.build(pkg1_resolved, conda_build.config.config)
-        self.assertTrue(os.path.exists(r))
-        self.assertEqual(os.path.abspath(r), r)
-        self.assertEqual(os.path.basename(r), 'pkg1-1.0-py_0.tar.bz2')
+            rs = builder.build(pkg1_resolved, conda_build.config.config)
+        for r in rs:
+            self.assertTrue(os.path.exists(r))
+            self.assertEqual(os.path.abspath(r), r)
+            self.assertTrue(bool(re.match('pkg1-1.0-py(h[0-9a-f]{7})?_0.tar.bz2',
+                                          os.path.basename(r))))
 
     def test_numpy_dep(self):
         pkg1 = self.write_meta('pkg1', """
@@ -101,12 +107,14 @@ class Test_build(RecipeCreatingUnit):
         pkg1_resolved = ResolvedDistribution(pkg1, (['python', '3.5'], ['numpy', '1.11']))
         builder = Builder(None, None, None, None, None)
         if hasattr(conda_build, 'api'):
-            r = builder.build(pkg1_resolved, conda_build.api.Config())
+            rs = builder.build(pkg1_resolved, conda_build.api.Config())
         else:
-            r = builder.build(pkg1_resolved, conda_build.config.config)
-        self.assertTrue(os.path.exists(r))
-        self.assertEqual(os.path.abspath(r), r)
-        self.assertEqual(os.path.basename(r), 'pkg1-1.0-np111py35_0.tar.bz2')
+            rs = builder.build(pkg1_resolved, conda_build.config.config)
+        for r in rs:
+            self.assertTrue(os.path.exists(r))
+            self.assertEqual(os.path.abspath(r), r)
+            self.assertTrue(bool(re.match('pkg1-1.0-np111py35(h[0-9a-f]{7})?_0.tar.bz2',
+                                          os.path.basename(r))))
 
 
 class Test__find_existing_built_dists(RecipeCreatingUnit):

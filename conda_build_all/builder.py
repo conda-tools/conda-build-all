@@ -19,7 +19,8 @@ import os
 
 from binstar_client.utils import get_binstar
 import binstar_client
-from .conda_interface import Resolve, get_index, subdir, copy_index
+from .conda_interface import (Resolve, get_index, subdir, copy_index,
+                              string_types)
 
 try:
     import conda_build.api
@@ -84,7 +85,17 @@ def list_metas(directory, max_depth=0, config=None):
 
         if 'meta.yaml' in files:
             if hasattr(conda_build, 'api'):
-                packages.append(conda_build.api.render(new_root, config=config)[0])
+                pkgs = conda_build.api.render(new_root, config=config,
+                                        finalize=False, bypass_env_check=True)
+                # cb2 returns a tuple, with the metadata object as the first
+                #    element.  That's all we care about.
+                if hasattr(pkgs[0], 'config'):
+                    pkgs = [pkgs[0]]
+                # cb3 returns a list of tuples, each with the metadata object
+                #    as the first element.  Collect them up.
+                else:
+                    pkgs = [pkg[0] for pkg in pkgs]
+                packages.extend(pkgs)
             else:
                 packages.append(MetaData(new_root))
 
@@ -107,8 +118,15 @@ def sort_dependency_order(metas, config):
             # is only a suitable solution when selectors are also comments.
             return data
 
+        meta.final = False
         with mock.patch('conda_build.metadata.select_lines', new=select_lines):
-            with mock.patch('conda_build.jinja_context.select_lines', new=select_lines):
+            try:
+                with mock.patch('conda_build.jinja_context.select_lines', new=select_lines):
+                    try:
+                        meta.parse_again(config, permit_undefined_jinja=True)
+                    except TypeError:
+                        meta.parse_again(permit_undefined_jinja=True)
+            except AttributeError:
                 try:
                     meta.parse_again(config, permit_undefined_jinja=True)
                 except TypeError:
@@ -206,11 +224,13 @@ class Builder(object):
         print('Building ', meta.dist())
         config = meta.vn_context(config=config)
         try:
-            conda_build.api.build(meta.meta, config=config)
-            return conda_build.api.get_output_file_path(meta.meta, config)
+            output_paths = conda_build.api.build(meta.meta, config=config)
         except AttributeError:
             with meta.vn_context():
-                return bldpkg_path(build.build(meta.meta))
+                output_paths = bldpkg_path(build.build(meta.meta))
+        if isinstance(output_paths, string_types):
+            output_paths = [output_paths]
+        return output_paths
 
     def compute_build_distros(self, index, recipes, config):
         """
