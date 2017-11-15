@@ -61,8 +61,11 @@ class DirectoryDestination(ArtefactDestination):
 
     def make_available(self, meta, built_dist_path, just_built, config=None):
         if just_built:
-            print(meta, built_dist_path, just_built)
-            shutil.copy(built_dist_path, self.directory)
+            if type(built_dist_path) not in (list, tuple):
+                built_dist_path = [built_dist_path]
+            for path in built_dist_path:
+                print(meta, path, just_built)
+                shutil.copy(path, self.directory)
 
 
 class AnacondaClientChannelDest(ArtefactDestination):

@@ -140,25 +140,36 @@ class Test_AnacondaClientChannelDest(unittest.TestCase):
 class Test_DirectoryDestination(unittest.TestCase):
     def setUp(self):
         self.tmp_dir = tempfile.mkdtemp(prefix='recipes')
+        self.dd = DirectoryDestination(self.tmp_dir)
+        self.dummy_meta = mock.sentinel.dummy_meta
+        self.dummy_path1 = mock.sentinel.dummy_path1
+        self.dummy_path2 = mock.sentinel.dummy_path2
 
     def tearDown(self):
         shutil.rmtree(self.tmp_dir)
 
     def test_not_copying(self):
-        dd = DirectoryDestination(self.tmp_dir)
-        dd.make_available(mock.sentinel.dummy_meta,
-                          mock.sentinel.dummy_path,
-                          just_built=False,
-                          config=mock.sentinel.dummy_config)
+        with mock.patch('shutil.copy') as copy:
+            self.dd.make_available(self.dummy_meta,
+                                   self.dummy_path1,
+                                   just_built=False)
+        self.assertEqual(copy.call_count, 0)
 
     def test_copying(self):
-        dd = DirectoryDestination(self.tmp_dir)
         with mock.patch('shutil.copy') as copy:
-            dd.make_available(mock.sentinel.dummy_meta,
-                              mock.sentinel.dummy_path,
-                              just_built=True,
-                              config=mock.sentinel.dummy_config)
-        copy.assert_called_once_with(mock.sentinel.dummy_path, self.tmp_dir)
+            self.dd.make_available(self.dummy_meta,
+                                   self.dummy_path1,
+                                   just_built=True)
+        copy.assert_called_once_with(self.dummy_path1, self.tmp_dir)
+
+    def test_copying_multi(self):
+        paths = (self.dummy_path1, self.dummy_path2)
+        with mock.patch('shutil.copy') as copy:
+            self.dd.make_available(self.dummy_meta,
+                                   paths,
+                                   just_built=True)
+        calls = [mock.call(path, self.tmp_dir) for path in paths]
+        copy.assert_has_calls(calls)
 
 
 if __name__ == '__main__':
